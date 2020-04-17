@@ -6,7 +6,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class AdminUser {
+export class Admin {
 	@PrimaryGeneratedColumn()
 	id!: number;
 
