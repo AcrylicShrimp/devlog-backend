@@ -1,4 +1,3 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
 import { hash } from 'bcrypt';
 import { createHash } from 'crypto';
 import { createInterface } from 'readline';
