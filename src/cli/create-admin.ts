@@ -81,6 +81,7 @@ const questionHide = (query: string): Promise<string> => {
 			break;
 		}
 
+		console.log();
 		console.log(`email: ${email}`);
 		console.log(`username: ${username}`);
 
