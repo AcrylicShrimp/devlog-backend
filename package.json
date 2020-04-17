@@ -4,7 +4,8 @@
   "description": "My private devlog system.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "run:dev": "cross-env NODE_ENV=development nest start --debug --watch"
   },
   "repository": {
     "type": "git",
@@ -18,12 +19,13 @@
   "bugs": {
     "url": "https://github.com/AcrylicShrimp/devlog-backend/issues"
   },
-  "homepage": "https://github.com/AcrylicShrimp/devlog-backend#readme",
+  "homepage": "https://blog.ashrimp.dev/",
   "dependencies": {
     "@nestjs/common": "^7.0.8",
     "@nestjs/core": "^7.0.8",
     "@nestjs/platform-express": "^7.0.8",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.2",
     "helmet": "^3.22.0",
     "mysql2": "^2.1.0",
     "reflect-metadata": "^0.1.13",
