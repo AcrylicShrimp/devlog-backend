@@ -1,9 +1,9 @@
-import { hash } from 'bcrypt';
-import { createHash } from 'crypto';
 import { createInterface } from 'readline';
 import { Writable } from 'stream';
 import { createConnection, QueryFailedError } from 'typeorm';
 import validator from 'validator';
+
+import { AuthTokenService } from '../auth/auth.token.service';
 
 import { Admin } from '../db/entity/Admin';
 
@@ -94,9 +94,7 @@ const questionHide = (query: string): Promise<string> => {
 	const admin = new Admin();
 	admin.email = email;
 	admin.username = username;
-	admin.pw = await createHash('sha256')
-		.update(await hash(pw, 10))
-		.digest('base64');
+	admin.pw = await new AuthTokenService().hashPW(pw);
 
 	try {
 		await connection.manager.save(admin);
