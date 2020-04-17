@@ -1,0 +1,49 @@
+{
+  "name": "devlog-backend",
+  "version": "1.0.0",
+  "description": "My private devlog system.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AcrylicShrimp/devlog-backend.git"
+  },
+  "keywords": [
+    "devlog"
+  ],
+  "author": "AcrylicShrimp",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AcrylicShrimp/devlog-backend/issues"
+  },
+  "homepage": "https://github.com/AcrylicShrimp/devlog-backend#readme",
+  "dependencies": {
+    "@nestjs/common": "^7.0.8",
+    "@nestjs/core": "^7.0.8",
+    "@nestjs/platform-express": "^7.0.8",
+    "cors": "^2.8.5",
+    "helmet": "^3.22.0",
+    "mysql2": "^2.1.0",
+    "reflect-metadata": "^0.1.13",
+    "rxjs": "^6.5.5",
+    "typeorm": "^0.2.24",
+    "validator": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.6",
+    "@types/express": "^4.17.6",
+    "@types/helmet": "0.0.45",
+    "@types/node": "^13.11.1",
+    "@types/validator": "^13.0.0",
+    "@typescript-eslint/eslint-plugin": "^2.28.0",
+    "@typescript-eslint/parser": "^2.28.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-import": "^2.20.2",
+    "ts-loader": "^7.0.0",
+    "ts-node": "^8.8.2",
+    "typescript": "^3.8.3"
+  }
+}
