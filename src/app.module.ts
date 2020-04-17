@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
 
-@Module({})
+import { DBModule } from './db/db.module';
+
+@Module({ imports: [DBModule] })
 export class AppModule {}
