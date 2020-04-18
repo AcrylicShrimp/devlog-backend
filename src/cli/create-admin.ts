@@ -59,7 +59,7 @@ const questionHide = (query: string): Promise<string> => {
 
 		for (;;) {
 			const usernameFromEmail = validator.trim(email.split('@')[0]);
-			username = await question(`username [${usernameFromEmail}]:`);
+			username = await question(`username [${usernameFromEmail}]: `);
 
 			if (!username || !(username = validator.trim(username)))
 				username = usernameFromEmail;
@@ -70,11 +70,11 @@ const questionHide = (query: string): Promise<string> => {
 		}
 
 		for (;;) {
-			pw = await questionHide('password:');
+			pw = await questionHide('password: ');
 
 			if (!pw || !validator.isLength(pw, { min: 6 })) continue;
 
-			const pwConfirm = await questionHide('password confirm:');
+			const pwConfirm = await questionHide('password confirm: ');
 
 			if (pw !== pwConfirm) continue;
 
@@ -85,7 +85,7 @@ const questionHide = (query: string): Promise<string> => {
 		console.log(`email: ${email}`);
 		console.log(`username: ${username}`);
 
-		const answer = validator.trim(await question('is it ok? [Yn]:'));
+		const answer = validator.trim(await question('is it ok? [Yn]: '));
 
 		if (!answer || answer === 'y' || answer === 'Y') break;
 	}
