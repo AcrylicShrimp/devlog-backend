@@ -1,9 +1,12 @@
 import {
 	Controller,
+	Delete,
 	Post,
 	Body,
+	Param,
 	BadRequestException
 } from '@nestjs/common';
+import validator from 'validator';
 
 import { AuthTokenService } from '../auth/auth.token.service';
 import { DBConnService } from '../db/db.conn.service';
@@ -48,6 +51,25 @@ export class AdminSessionController {
 			await mgr.save(session);
 
 			return session.token;
+		});
+	}
+
+	@Delete('admin/sessions/:token')
+	async deauthenticate(@Param('token') token: string): Promise<void> {
+		if (
+			!token ||
+			!(token = token.trim()) ||
+			!validator.isLength(token, { min: 256, max: 256 })
+		)
+			throw new BadRequestException('bad token');
+
+		await this.conn.conn.transaction(async (mgr) => {
+			const session = await mgr.findOne(AdminSession, {
+				where: { token: token },
+				select: ['id']
+			});
+
+			if (session) await mgr.remove(session);
 		});
 	}
 }
