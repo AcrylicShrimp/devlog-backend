@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 
-import { AdminSessionController } from './admin.session.controller';
 import { AuthModule } from '../auth/auth.module';
+
+import { AdminSessionController } from './admin.session.controller';
 import { AdminCategoryController } from './admin.category.controller';
 
 @Module({
