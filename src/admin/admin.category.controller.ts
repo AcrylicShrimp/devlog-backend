@@ -3,9 +3,12 @@ import {
 	UseGuards,
 	Get,
 	Post,
+	Delete,
 	Body,
+	Param,
 	BadRequestException,
-	ConflictException
+	ConflictException,
+	NotFoundException
 } from '@nestjs/common';
 import validator from 'validator';
 
@@ -59,5 +62,25 @@ export class AdminCategoryController {
 
 			throw err;
 		}
+	}
+
+	@Delete('admin/categories/:name')
+	async deleteCategory(@Param('name') name: string): Promise<void> {
+		if (!name || !(name = name.trim()))
+			throw new BadRequestException('name required');
+
+		if (!validator.isLength(name, { max: 32 }))
+			throw new BadRequestException('name too long');
+
+		await this.conn.conn.transaction(async (mgr) => {
+			const category = await mgr.findOne(Category, {
+				where: { name },
+				select: ['id']
+			});
+
+			if (!category) throw new NotFoundException('no category found');
+
+			await mgr.remove(category);
+		});
 	}
 }
