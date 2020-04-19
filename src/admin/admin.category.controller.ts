@@ -24,6 +24,7 @@ export class AdminCategoryController {
 	@Get('admin/categories')
 	async listCategories(): Promise<Category[]> {
 		return this.conn.conn.manager.find(Category, {
+			select: ['name', 'description', 'createdAt', 'modifiedAt'],
 			order: {
 				name: 'ASC'
 			}
