@@ -11,6 +11,7 @@ import {
 	ConflictException,
 	NotFoundException
 } from '@nestjs/common';
+import { QueryFailedError } from 'typeorm';
 import validator from 'validator';
 
 import { AdminGuard } from './admin.guard';
@@ -18,7 +19,6 @@ import { AdminGuard } from './admin.guard';
 import { DBConnService } from '../db/db.conn.service';
 
 import { Category } from '../db/entity/Category';
-import { QueryFailedError } from 'typeorm';
 
 @Controller()
 @UseGuards(AdminGuard)
