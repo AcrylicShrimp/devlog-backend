@@ -1,11 +1,7 @@
-import {
-	Controller,
-	Delete,
-	Post,
-	Body,
-	Param,
-	BadRequestException
-} from '@nestjs/common';
+import { Controller } from '@nestjs/common';
+import { Delete, Post } from '@nestjs/common';
+import { Body, Param } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import validator from 'validator';
 
 import { AuthTokenService } from '../auth/auth.token.service';
