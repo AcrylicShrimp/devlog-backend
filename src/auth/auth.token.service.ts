@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { randomBytes, createHash } from 'crypto';
 import { compare, hash } from 'bcrypt';
+import { randomBytes, createHash } from 'crypto';
 
 const TOKEN_BYTE = 128;
 const HASH_ROUND = 10;
