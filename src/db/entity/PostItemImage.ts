@@ -14,6 +14,9 @@ export class PostItemImage {
 	id!: number;
 
 	@Column()
+	index!: number;
+
+	@Column()
 	width!: number;
 
 	@Column()
