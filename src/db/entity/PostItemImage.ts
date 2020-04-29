@@ -17,10 +17,10 @@ export class PostItemImage {
 	@Column({ nullable: false })
 	index!: number;
 
-	@Column({ nullable: true })
+	@Column({ nullable: false })
 	width!: number;
 
-	@Column({ nullable: true })
+	@Column({ nullable: false })
 	height!: number;
 
 	@Column({ length: 64, nullable: false })
