@@ -3,7 +3,8 @@ import {
 	PrimaryGeneratedColumn,
 	Column,
 	CreateDateColumn,
-	ManyToOne
+	ManyToOne,
+	UpdateDateColumn
 } from 'typeorm';
 
 import { PostItem } from './PostItem';
@@ -13,19 +14,19 @@ export class PostItemImage {
 	@PrimaryGeneratedColumn()
 	id!: number;
 
-	@Column()
+	@Column({ nullable: false })
 	index!: number;
 
-	@Column()
+	@Column({ nullable: true })
 	width!: number;
 
-	@Column()
+	@Column({ nullable: true })
 	height!: number;
 
-	@Column('text')
+	@Column({ length: 64, nullable: false })
 	hash!: string; // Blurhash string used for front-end side.
 
-	@Column('text')
+	@Column({ length: 128, unique: true, nullable: false })
 	url!: string;
 
 	@ManyToOne(() => PostItem, (post) => post.images)
@@ -33,4 +34,7 @@ export class PostItemImage {
 
 	@CreateDateColumn()
 	createdAt!: Date;
+
+	@UpdateDateColumn()
+	modifiedAt!: Date;
 }
