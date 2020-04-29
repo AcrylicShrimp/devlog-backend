@@ -22,7 +22,7 @@ export class PostItem {
 	@ManyToOne(() => Category)
 	category!: Category;
 
-	@Column({ length: 128, unique: true, nullable: false })
+	@Column({ length: 128, nullable: false })
 	title!: string;
 
 	@Column({ length: 128, nullable: true })
@@ -34,7 +34,7 @@ export class PostItem {
 	@OneToMany(() => PostItemImage, (image) => image.post)
 	images!: PostItemImage[];
 
-	@Column()
+	@Column({ nullable: false })
 	isPrivate!: boolean;
 
 	@CreateDateColumn()
