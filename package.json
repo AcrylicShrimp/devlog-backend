@@ -26,6 +26,7 @@
     "@nestjs/platform-express": "^7.0.9",
     "aws-sdk": "^2.662.0",
     "bcrypt": "^4.0.1",
+    "blurhash": "^1.1.3",
     "connect-busboy": "0.0.2",
     "cors": "^2.8.5",
     "cross-env": "^7.0.2",
@@ -34,6 +35,7 @@
     "mysql2": "^2.1.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^6.5.5",
+    "sharp": "^0.25.2",
     "showdown": "^1.9.1",
     "typeorm": "^0.2.24",
     "validator": "^13.0.0"
