@@ -26,7 +26,7 @@ export class PostItemImage {
 	@Column({ length: 64, nullable: false })
 	hash!: string; // Blurhash string used for front-end side.
 
-	@Column({ length: 128, unique: true, nullable: false })
+	@Column({ length: 256, unique: true, nullable: false })
 	url!: string;
 
 	@ManyToOne(() => PostItem, (post) => post.images)
