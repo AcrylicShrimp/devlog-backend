@@ -16,6 +16,9 @@ export class PostItem {
 	@PrimaryGeneratedColumn()
 	id!: number;
 
+	@Column({ length: 64, unique: true })
+	uuid!: string;
+
 	@ManyToOne(() => Category)
 	category!: Category;
 
