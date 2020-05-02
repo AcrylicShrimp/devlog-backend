@@ -25,7 +25,7 @@ export class PostItem {
 	@Column({ length: 128, nullable: false })
 	title!: string;
 
-	@Column({ length: 128, nullable: true })
+	@Column({ length: 256, nullable: true })
 	contentPreview!: string;
 
 	@Column({ type: 'mediumtext', nullable: true })
