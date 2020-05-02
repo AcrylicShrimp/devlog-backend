@@ -298,7 +298,7 @@ export class AdminPostController {
 											dompurify(
 												(new JSDOM()
 													.window as unknown) as Window
-											).sanitize(parseResult)
+											).sanitize(parseResult.trim())
 									  )
 						)
 				);
