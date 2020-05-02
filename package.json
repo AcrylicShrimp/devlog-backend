@@ -36,7 +36,6 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^6.5.5",
     "sharp": "^0.25.2",
-    "showdown": "^1.9.1",
     "typeorm": "^0.2.24",
     "validator": "^13.0.0"
   },
