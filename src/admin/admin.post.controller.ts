@@ -1,5 +1,5 @@
 import { Controller, UseGuards, Req } from '@nestjs/common';
-import { Post } from '@nestjs/common';
+import { Get, Post } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common';
 import { S3 } from 'aws-sdk';
 import { encode } from 'blurhash';
@@ -33,6 +33,25 @@ export class AdminPostController {
 			secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
 			region: process.env.AWS_REGION!
 		});
+	}
+
+	@Get('admin/posts')
+	async listPosts(): Promise<PostItem[]> {
+		return this.conn.conn.manager
+			.createQueryBuilder(PostItem, 'PostItem')
+			.leftJoin('PostItem.category', 'Category')
+			.select([
+				'PostItem.uuid',
+				'PostItem.title',
+				'PostItem.contentPreview',
+				'PostItem.isPrivate',
+				'PostItem.createdAt',
+				'PostItem.modifiedAt',
+				'Category.name'
+			])
+			.orderBy('PostItem.modifiedAt', 'DESC')
+			.limit(20)
+			.getMany();
 	}
 
 	@Post('admin/posts')
