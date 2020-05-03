@@ -11,3 +11,10 @@ export function asEnum<
 
 	throw new Error(`expected one of ${Object.values(e).join(', ')}`);
 }
+
+export function isEnum<
+	E extends Record<keyof E, string | number>,
+	K extends string | number
+>(e: E, k: K & Extractable<E[keyof E], K>): boolean {
+	return 0 <= Object.values(e).indexOf(k);
+}
