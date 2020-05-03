@@ -18,8 +18,10 @@ import { AuthTokenService } from '../auth/auth.token.service';
 import { DBConnService } from '../db/db.conn.service';
 
 import { Category } from '../db/entity/Category';
-import { PostItem } from '../db/entity/PostItem';
+import { PostItem, PostItemAccessLevel } from '../db/entity/PostItem';
 import { PostItemImage } from '../db/entity/PostItemImage';
+
+import { asEnum, isEnum } from '../helper/Enum';
 
 @Controller()
 @UseGuards(AdminGuard)
@@ -44,7 +46,7 @@ export class AdminPostController {
 				'PostItem.uuid',
 				'PostItem.title',
 				'PostItem.contentPreview',
-				'PostItem.isPrivate',
+				'PostItem.accessLevel',
 				'PostItem.createdAt',
 				'PostItem.modifiedAt',
 				'Category.name'
@@ -73,7 +75,7 @@ export class AdminPostController {
 		let title: string = req.body.title;
 		let categoryName: string = req.body.category;
 		let content: string = req.body.content;
-		let isPrivate: string = req.body.private;
+		let accessLevel: string = req.body['access-level'];
 
 		if (!title || !(title = title.trim()))
 			throw new BadRequestException('title required');
@@ -90,8 +92,11 @@ export class AdminPostController {
 		if (!content || !(content = content.trim()))
 			throw new BadRequestException('content required');
 
-		if (!isPrivate || !(isPrivate = isPrivate.trim()))
-			throw new BadRequestException('private required');
+		if (!accessLevel || !(accessLevel = accessLevel.trim()))
+			throw new BadRequestException('access-level required');
+
+		if (!isEnum(PostItemAccessLevel, accessLevel))
+			throw new BadRequestException('bad access-level');
 
 		const images = await Promise.all(
 			imageBodies.map(async (imageBody) => {
@@ -332,8 +337,7 @@ export class AdminPostController {
 				postItem.contentPreview = contentPreview;
 				postItem.content = content;
 				postItem.htmlContent = htmlContent;
-				postItem.isPrivate =
-					isPrivate === 'true' || isPrivate === 'yes';
+				postItem.accessLevel = asEnum(PostItemAccessLevel, accessLevel);
 
 				await mgr.save(postItem);
 				await Promise.all(
