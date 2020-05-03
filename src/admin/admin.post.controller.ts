@@ -348,6 +348,7 @@ export class AdminPostController {
 				postItem.contentPreview = contentPreview;
 				postItem.content = content;
 				postItem.htmlContent = htmlContent;
+				postItem.imageCount = images.length;
 				postItem.accessLevel = asEnum(PostItemAccessLevel, accessLevel);
 
 				await mgr.save(postItem);
