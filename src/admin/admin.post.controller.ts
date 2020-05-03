@@ -44,7 +44,7 @@ export class AdminPostController {
 			.createQueryBuilder(PostItem, 'PostItem')
 			.leftJoin('PostItem.category', 'Category')
 			.select([
-				'PostItem.uuid',
+				'PostItem.slug',
 				'PostItem.title',
 				'PostItem.contentPreview',
 				'PostItem.accessLevel',
