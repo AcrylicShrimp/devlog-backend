@@ -45,9 +45,9 @@ export class AdminPostController {
 			.leftJoin('PostItem.category', 'Category')
 			.select([
 				'PostItem.slug',
+				'PostItem.accessLevel',
 				'PostItem.title',
 				'PostItem.contentPreview',
-				'PostItem.accessLevel',
 				'PostItem.createdAt',
 				'PostItem.modifiedAt',
 				'Category.name'
@@ -74,10 +74,10 @@ export class AdminPostController {
 		);
 
 		let slug: string = req.body.slug;
-		let title: string = req.body.title;
-		let categoryName: string = req.body.category;
-		let content: string = req.body.content;
 		let accessLevel: string = req.body['access-level'];
+		let categoryName: string = req.body.category;
+		let title: string = req.body.title;
+		let content: string = req.body.content;
 
 		if (!slug || !(slug = slug.trim()))
 			throw new BadRequestException('slug required');
@@ -85,26 +85,26 @@ export class AdminPostController {
 		if (!/^[a-z0-9][a-z0-9\-]{3,}[a-z0-9]$/.test(slug))
 			throw new BadRequestException('bad slug');
 
+		if (!accessLevel || !(accessLevel = accessLevel.trim()))
+			throw new BadRequestException('access-level required');
+
+		if (!isEnum(PostItemAccessLevel, accessLevel))
+			throw new BadRequestException('bad access-level');
+
+		if (!categoryName || !(categoryName = categoryName.trim()))
+			throw new BadRequestException('category required');
+
 		if (!title || !(title = title.trim()))
 			throw new BadRequestException('title required');
 
 		if (!validator.isLength(title, { max: 128 }))
 			throw new BadRequestException('title too long');
 
-		if (!categoryName || !(categoryName = categoryName.trim()))
-			throw new BadRequestException('category required');
-
 		if (!validator.isLength(categoryName, { max: 32 }))
 			throw new BadRequestException('category too long');
 
 		if (!content || !(content = content.trim()))
 			throw new BadRequestException('content required');
-
-		if (!accessLevel || !(accessLevel = accessLevel.trim()))
-			throw new BadRequestException('access-level required');
-
-		if (!isEnum(PostItemAccessLevel, accessLevel))
-			throw new BadRequestException('bad access-level');
 
 		const images = await Promise.all(
 			imageBodies.map(async (imageBody) => {

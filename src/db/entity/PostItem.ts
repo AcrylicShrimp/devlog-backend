@@ -28,6 +28,9 @@ export class PostItem {
 	@Column({ length: 256, unique: true })
 	slug!: string;
 
+	@Column({ type: 'enum', enum: PostItemAccessLevel })
+	accessLevel!: PostItemAccessLevel;
+
 	@ManyToOne(() => Category)
 	category!: Category;
 
@@ -45,9 +48,6 @@ export class PostItem {
 
 	@OneToMany(() => PostItemImage, (image) => image.post)
 	images!: PostItemImage[];
-
-	@Column({ type: 'enum', enum: PostItemAccessLevel })
-	accessLevel!: PostItemAccessLevel;
 
 	@CreateDateColumn()
 	createdAt!: Date;
