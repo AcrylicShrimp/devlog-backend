@@ -1,6 +1,6 @@
 import { Controller, UseGuards, Req } from '@nestjs/common';
 import { Get, Post } from '@nestjs/common';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { S3 } from 'aws-sdk';
 import { encode } from 'blurhash';
 import dompurify from 'dompurify';
@@ -22,6 +22,7 @@ import { PostItem, PostItemAccessLevel } from '../db/entity/PostItem';
 import { PostItemImage } from '../db/entity/PostItemImage';
 
 import { asEnum, isEnum } from '../helper/Enum';
+import { QueryFailedError } from 'typeorm';
 
 @Controller()
 @UseGuards(AdminGuard)
@@ -72,10 +73,17 @@ export class AdminPostController {
 			req.pipe(req.busboy).on('finish', () => resolve())
 		);
 
+		let slug: string = req.body.slug;
 		let title: string = req.body.title;
 		let categoryName: string = req.body.category;
 		let content: string = req.body.content;
 		let accessLevel: string = req.body['access-level'];
+
+		if (!slug || !(slug = slug.trim()))
+			throw new BadRequestException('slug required');
+
+		if (!/^[a-z0-9][a-z0-9\-]{3,}[a-z0-9]$/.test(slug))
+			throw new BadRequestException('bad slug');
 
 		if (!title || !(title = title.trim()))
 			throw new BadRequestException('title required');
@@ -332,6 +340,7 @@ export class AdminPostController {
 
 				const postItem = new PostItem();
 				postItem.uuid = postId;
+				postItem.slug = slug;
 				postItem.category = category;
 				postItem.title = title;
 				postItem.contentPreview = contentPreview;
@@ -376,6 +385,9 @@ export class AdminPostController {
 							.promise();
 					} catch {}
 				}
+
+				if (err instanceof QueryFailedError)
+					throw new ConflictException('slug already taken');
 
 				throw err;
 			}
