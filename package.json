@@ -1,69 +1,70 @@
 {
-  "name": "devlog-backend",
-  "version": "1.0.0",
-  "description": "My private devlog system.",
-  "main": "index.js",
-  "scripts": {
-    "build": "tsc",
-    "run:dev": "cross-env NODE_ENV=development nest start --debug --watch"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/AcrylicShrimp/devlog-backend.git"
-  },
-  "keywords": [
-    "devlog"
-  ],
-  "author": "AcrylicShrimp",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/AcrylicShrimp/devlog-backend/issues"
-  },
-  "homepage": "https://blog.ashrimp.dev/",
-  "dependencies": {
-    "@nestjs/common": "^7.0.8",
-    "@nestjs/core": "^7.0.8",
-    "@nestjs/platform-express": "^7.0.9",
-    "aws-sdk": "^2.662.0",
-    "bcrypt": "^4.0.1",
-    "blurhash": "^1.1.3",
-    "connect-busboy": "0.0.2",
-    "cors": "^2.8.5",
-    "cross-env": "^7.0.2",
-    "dompurify": "^2.0.10",
-    "dotenv": "^8.2.0",
-    "helmet": "^3.22.0",
-    "highlight.js": "^10.0.1",
-    "jsdom": "^16.2.2",
-    "marked": "^1.0.0",
-    "mysql2": "^2.1.0",
-    "reflect-metadata": "^0.1.13",
-    "rxjs": "^6.5.5",
-    "sharp": "^0.25.2",
-    "typeorm": "^0.2.24",
-    "validator": "^13.0.0"
-  },
-  "devDependencies": {
-    "@nestjs/cli": "^7.1.2",
-    "@types/bcrypt": "^3.0.0",
-    "@types/connect-busboy": "0.0.2",
-    "@types/cors": "^2.8.6",
-    "@types/dompurify": "^2.0.1",
-    "@types/express": "^4.17.6",
-    "@types/helmet": "0.0.45",
-    "@types/highlight.js": "^9.12.3",
-    "@types/jsdom": "^16.2.1",
-    "@types/marked": "^0.7.4",
-    "@types/node": "^13.11.1",
-    "@types/sharp": "^0.25.0",
-    "@types/validator": "^13.0.0",
-    "@typescript-eslint/eslint-plugin": "^2.28.0",
-    "@typescript-eslint/parser": "^2.28.0",
-    "eslint": "^6.8.0",
-    "eslint-config-prettier": "^6.10.1",
-    "eslint-plugin-import": "^2.20.2",
-    "ts-loader": "^7.0.0",
-    "ts-node": "^8.8.2",
-    "typescript": "^3.8.3"
-  }
+	"name": "devlog-backend",
+	"version": "1.0.0",
+	"description": "My private devlog system.",
+	"main": "index.js",
+	"scripts": {
+		"build": "nest build",
+		"typeorm": "ts-node ./node_modules/.bin/typeorm",
+		"run:dev": "cross-env NODE_ENV=development nest start --debug --watch"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/AcrylicShrimp/devlog-backend.git"
+	},
+	"keywords": [
+		"devlog"
+	],
+	"author": "AcrylicShrimp",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/AcrylicShrimp/devlog-backend/issues"
+	},
+	"homepage": "https://blog.ashrimp.dev/",
+	"dependencies": {
+		"@nestjs/common": "^7.0.8",
+		"@nestjs/core": "^7.0.8",
+		"@nestjs/platform-express": "^7.0.9",
+		"aws-sdk": "^2.662.0",
+		"bcrypt": "^4.0.1",
+		"blurhash": "^1.1.3",
+		"connect-busboy": "0.0.2",
+		"cors": "^2.8.5",
+		"cross-env": "^7.0.2",
+		"dompurify": "^2.0.10",
+		"dotenv": "^8.2.0",
+		"helmet": "^3.22.0",
+		"highlight.js": "^10.0.1",
+		"jsdom": "^16.2.2",
+		"marked": "^1.0.0",
+		"mysql2": "^2.1.0",
+		"reflect-metadata": "^0.1.13",
+		"rxjs": "^6.5.5",
+		"sharp": "^0.25.2",
+		"typeorm": "^0.2.24",
+		"validator": "^13.0.0"
+	},
+	"devDependencies": {
+		"@nestjs/cli": "^7.1.2",
+		"@types/bcrypt": "^3.0.0",
+		"@types/connect-busboy": "0.0.2",
+		"@types/cors": "^2.8.6",
+		"@types/dompurify": "^2.0.1",
+		"@types/express": "^4.17.6",
+		"@types/helmet": "0.0.45",
+		"@types/highlight.js": "^9.12.3",
+		"@types/jsdom": "^16.2.1",
+		"@types/marked": "^0.7.4",
+		"@types/node": "^13.11.1",
+		"@types/sharp": "^0.25.0",
+		"@types/validator": "^13.0.0",
+		"@typescript-eslint/eslint-plugin": "^2.28.0",
+		"@typescript-eslint/parser": "^2.28.0",
+		"eslint": "^6.8.0",
+		"eslint-config-prettier": "^6.10.1",
+		"eslint-plugin-import": "^2.20.2",
+		"ts-loader": "^7.0.0",
+		"ts-node": "^8.8.2",
+		"typescript": "^3.8.3"
+	}
 }
