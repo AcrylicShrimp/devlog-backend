@@ -138,6 +138,7 @@ export class AdminPostController {
 				}
 
 				return {
+					uuid: await this.token.generateShort(),
 					width,
 					height,
 					hash,
@@ -167,7 +168,7 @@ export class AdminPostController {
 								service: this.s3,
 								params: {
 									Bucket: process.env.AWS_S3_BUCKET_NAME!,
-									Key: `${postId}/${await this.token.generateShort()}`,
+									Key: `${postId}/${image.uuid}`,
 									ACL: 'private',
 									Body: image.body,
 									ContentType: imageBodies[index].mime
@@ -352,6 +353,7 @@ export class AdminPostController {
 				await Promise.all(
 					uploadResults.map(async (uploadResult, index) => {
 						const postItemImage = new PostItemImage();
+						postItemImage.uuid = images[index].uuid;
 						postItemImage.index = index;
 						postItemImage.width = images[index].width || 0;
 						postItemImage.height = images[index].height || 0;
