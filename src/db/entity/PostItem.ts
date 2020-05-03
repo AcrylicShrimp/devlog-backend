@@ -11,6 +11,12 @@ import {
 import { Category } from './Category';
 import { PostItemImage } from './PostItemImage';
 
+export enum PostItemAccessLevel {
+	PUBLIC = 'public',
+	UNLISTED = 'unlisted',
+	PRIVATE = 'private'
+}
+
 @Entity()
 export class PostItem {
 	@PrimaryGeneratedColumn()
@@ -37,8 +43,8 @@ export class PostItem {
 	@OneToMany(() => PostItemImage, (image) => image.post)
 	images!: PostItemImage[];
 
-	@Column({ nullable: false })
-	isPrivate!: boolean;
+	@Column({ type: 'enum', enum: PostItemAccessLevel })
+	accessLevel!: PostItemAccessLevel;
 
 	@CreateDateColumn()
 	createdAt!: Date;
