@@ -49,6 +49,9 @@ export class PostItem {
 	@OneToMany(() => PostItemImage, (image) => image.post)
 	images!: PostItemImage[];
 
+	@Column()
+	imageCount!: number; // Accumulates total uploaded image count.
+
 	@CreateDateColumn()
 	createdAt!: Date;
 
