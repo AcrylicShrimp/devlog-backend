@@ -335,7 +335,7 @@ export class AdminPostController {
 						)
 				);
 
-				// Slice some begining content and cutout a broken HTML entity if any.
+				// Slice some beginning content and cutout a broken HTML entity if any.
 				const contentPreview = plainContent
 					.slice(0, 256)
 					.replace(/\s*&[^\s;]*$/, '');
