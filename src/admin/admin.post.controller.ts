@@ -22,6 +22,7 @@ import { PostItem, PostItemAccessLevel } from '../db/entity/PostItem';
 import { PostItemImage } from '../db/entity/PostItemImage';
 
 import { asEnum, isEnum } from '../helper/Enum';
+import { SlugRegex } from '../helper/Regex';
 import { QueryFailedError } from 'typeorm';
 
 @Controller()
@@ -82,8 +83,7 @@ export class AdminPostController {
 		if (!slug || !(slug = slug.trim()))
 			throw new BadRequestException('slug required');
 
-		if (!/^[a-z0-9][a-z0-9\-]{3,}[a-z0-9]$/.test(slug))
-			throw new BadRequestException('bad slug');
+		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
 
 		if (!accessLevel || !(accessLevel = accessLevel.trim()))
 			throw new BadRequestException('access-level required');
