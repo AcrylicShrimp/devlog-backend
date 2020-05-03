@@ -1,18 +1,39 @@
-{
-	"type": "mysql",
-	"host": "localhost",
-	"port": 3306,
-	"username": "root",
-	"password": null,
-	"database": "devlog",
-	"synchronize": false,
-	"logging": true,
-	"entities": ["src/db/entity/**/*.ts"],
-	"migrations": ["src/db/migration/**/*.ts"],
-	"subscribers": ["src/db/subscriber/**/*.ts"],
-	"cli": {
-		"entitiesDir": "src/db/entity",
-		"migrationsDir": "src/db/migration",
-		"subscribersDir": "src/db/subscriber"
+[
+	{
+		"type": "mysql",
+		"host": "localhost",
+		"port": 3306,
+		"username": "root",
+		"password": null,
+		"database": "devlog",
+		"synchronize": false,
+		"logging": true,
+		"entities": ["dist/db/entity/**/*.js"],
+		"migrations": ["dist/db/migration/**/*.js"],
+		"subscribers": ["dist/db/subscriber/**/*.js"],
+		"cli": {
+			"entitiesDir": "src/db/entity",
+			"migrationsDir": "src/db/migration",
+			"subscribersDir": "src/db/subscriber"
+		}
+	},
+	{
+		"name": "migration",
+		"type": "mysql",
+		"host": "localhost",
+		"port": 3306,
+		"username": "root",
+		"password": null,
+		"database": "devlog",
+		"synchronize": false,
+		"logging": true,
+		"entities": ["src/db/entity/**/*.ts"],
+		"migrations": ["src/db/migration/**/*.ts"],
+		"subscribers": ["src/db/subscriber/**/*.ts"],
+		"cli": {
+			"entitiesDir": "src/db/entity",
+			"migrationsDir": "src/db/migration",
+			"subscribersDir": "src/db/subscriber"
+		}
 	}
-}
+]
