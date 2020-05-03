@@ -25,6 +25,9 @@ export class PostItem {
 	@Column({ length: 64, unique: true })
 	uuid!: string;
 
+	@Column({ length: 256, unique: true })
+	slug!: string;
+
 	@ManyToOne(() => Category)
 	category!: Category;
 
