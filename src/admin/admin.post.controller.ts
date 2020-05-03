@@ -372,7 +372,7 @@ export class AdminPostController {
 					let index = 0;
 					index < uploadResults!.length;
 					index += 1000
-				) {
+				)
 					try {
 						await this.s3
 							.deleteObjects({
@@ -387,7 +387,6 @@ export class AdminPostController {
 							})
 							.promise();
 					} catch {}
-				}
 
 				if (err instanceof QueryFailedError)
 					throw new ConflictException('slug already taken');
