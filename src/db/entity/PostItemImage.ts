@@ -14,6 +14,9 @@ export class PostItemImage {
 	@PrimaryGeneratedColumn()
 	id!: number;
 
+	@Column({ length: 64 })
+	uuid!: string;
+
 	@Column({ nullable: false })
 	index!: number;
 
