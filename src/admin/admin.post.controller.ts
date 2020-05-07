@@ -159,6 +159,51 @@ export class AdminPostController {
 		});
 	}
 
+	@Delete('admin/posts/:slug')
+	async deletePost(@Param('slug') slug: string): Promise<void> {
+		if (!slug || !(slug = slug.trim()))
+			throw new BadRequestException('slug required');
+
+		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
+
+		await this.conn.conn.transaction(async (mgr) => {
+			const post = await mgr
+				.createQueryBuilder(PostItem, 'PostItem')
+				.leftJoin('PostItem.images', 'PostItemImage')
+				.where('PostItem.slug = :slug', { slug })
+				.select([
+					'PostItem.id',
+					'PostItem.uuid',
+					'PostItemImage.id',
+					'PostItemImage.uuid'
+				])
+				.getOne();
+
+			if (!post) throw new NotFoundException('no post found');
+
+			for (let index = 0; index < post.images.length; index += 1000)
+				try {
+					await this.s3
+						.deleteObjects({
+							Bucket: process.env.AWS_S3_BUCKET_NAME!,
+							Delete: {
+								Objects: post.images
+									.slice(index, index + 1000)
+									.map((image) => {
+										return {
+											Key: `${post.uuid}/${image.uuid}`
+										};
+									})
+							}
+						})
+						.promise();
+				} catch {}
+
+			mgr.remove(post.images);
+			mgr.remove(post);
+		});
+	}
+
 	@Post('admin/posts/:slug/images')
 	async newPostImage(
 		@Req() req: Request,
@@ -599,51 +644,6 @@ export class AdminPostController {
 					htmlContent
 				}
 			);
-		});
-	}
-
-	@Delete('admin/posts/:slug')
-	async deletePost(@Param('slug') slug: string): Promise<void> {
-		if (!slug || !(slug = slug.trim()))
-			throw new BadRequestException('slug required');
-
-		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
-
-		await this.conn.conn.transaction(async (mgr) => {
-			const post = await mgr
-				.createQueryBuilder(PostItem, 'PostItem')
-				.leftJoin('PostItem.images', 'PostItemImage')
-				.where('PostItem.slug = :slug', { slug })
-				.select([
-					'PostItem.id',
-					'PostItem.uuid',
-					'PostItemImage.id',
-					'PostItemImage.uuid'
-				])
-				.getOne();
-
-			if (!post) throw new NotFoundException('no post found');
-
-			for (let index = 0; index < post.images.length; index += 1000)
-				try {
-					await this.s3
-						.deleteObjects({
-							Bucket: process.env.AWS_S3_BUCKET_NAME!,
-							Delete: {
-								Objects: post.images
-									.slice(index, index + 1000)
-									.map((image) => {
-										return {
-											Key: `${post.uuid}/${image.uuid}`
-										};
-									})
-							}
-						})
-						.promise();
-				} catch {}
-
-			mgr.remove(post.images);
-			mgr.remove(post);
 		});
 	}
 }
