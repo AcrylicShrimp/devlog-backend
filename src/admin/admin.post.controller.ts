@@ -379,6 +379,189 @@ export class AdminPostController {
 		});
 	}
 
+	@Put('admin/posts/:slug/content')
+	async putPostContent(
+		@Param('slug') slug: string,
+		@Body('content') content: string
+	) {
+		if (!slug || !(slug = slug.trim()))
+			throw new BadRequestException('slug required');
+
+		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
+
+		if (!content || !(content = content.trim()))
+			throw new BadRequestException('content required');
+
+		await this.conn.conn.transaction(async (mgr) => {
+			const post = await mgr
+				.createQueryBuilder(PostItem, 'PostItem')
+				.leftJoin('PostItem.images', 'PostItemImage')
+				.select([
+					'PostItem.id',
+					'PostItemImage.index',
+					'PostItemImage.url'
+				])
+				.where('PostItem.slug = :slug', { slug })
+				.getOne();
+
+			if (!post) throw new NotFoundException('post not exists');
+
+			const postImage: { [key: number]: string } = {};
+
+			post.images.forEach(
+				(image) => (postImage[image.index] = image.url)
+			);
+
+			const renderer = new (class extends Renderer {
+				image(href: string | null, title: string | null, text: string) {
+					if (href) {
+						const match = href.match(/\$(\d+)$/i);
+
+						if (match) {
+							const index = parseInt(match[1]);
+
+							if (!isNaN(index) && index in postImage)
+								href = postImage[index];
+						}
+					}
+
+					return super.image(href, title, text);
+				}
+			})();
+			const plainRenderer = new (class extends Renderer {
+				code() {
+					return '';
+				}
+
+				blockquote() {
+					return '';
+				}
+
+				html() {
+					return '';
+				}
+
+				heading() {
+					return '';
+				}
+
+				hr() {
+					return '';
+				}
+
+				list() {
+					return '';
+				}
+
+				listitem() {
+					return '';
+				}
+
+				checkbox() {
+					return '';
+				}
+
+				paragraph(text: string) {
+					return `${text} `;
+				}
+
+				table() {
+					return '';
+				}
+
+				tablerow() {
+					return '';
+				}
+
+				tablecell() {
+					return '';
+				}
+
+				strong(text: string) {
+					return text;
+				}
+
+				em(text: string) {
+					return text;
+				}
+
+				codespan(text: string) {
+					return text;
+				}
+
+				br() {
+					return ' ';
+				}
+
+				del() {
+					return '';
+				}
+
+				link(href: string | null, title: string | null, text: string) {
+					return text;
+				}
+
+				image() {
+					return '';
+				}
+
+				text(text: string) {
+					return text;
+				}
+			})();
+
+			const htmlContent = await new Promise<string>((resolve, reject) =>
+				parse(
+					content,
+					{
+						renderer,
+						highlight: (code, lang) =>
+							hljs.highlight(
+								hljs.getLanguage(lang) ? lang : 'plaintext',
+								code
+							).value
+					},
+					(err, parseResult) =>
+						err
+							? reject(err)
+							: resolve(
+									dompurify(
+										(new JSDOM()
+											.window as unknown) as Window
+									).sanitize(parseResult.trim())
+							  )
+				)
+			);
+			const plainContent = await new Promise<string>((resolve, reject) =>
+				parse(
+					content,
+					{
+						renderer: plainRenderer
+					},
+					(err, parseResult) =>
+						err
+							? reject(err)
+							: resolve(parseResult.trim().replace(/\s+/g, ' '))
+				)
+			);
+
+			// Slice some beginning content and cutout a broken HTML entity if any.
+			const contentPreview = plainContent
+				.slice(0, 256)
+				.replace(/\s*&[^\s;]*$/, '');
+
+			await mgr.update(
+				PostItem,
+				{ where: { id: post.id } },
+				{
+					contentPreview,
+					content,
+					htmlContent
+				}
+			);
+		});
+	}
+
 	@Delete('admin/posts/:slug')
 	async deletePost(@Param('slug') slug: string): Promise<void> {
 		if (!slug || !(slug = slug.trim()))
