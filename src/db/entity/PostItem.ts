@@ -38,18 +38,18 @@ export class PostItem {
 	title!: string;
 
 	@Column({ length: 256, nullable: true })
-	contentPreview!: string;
+	contentPreview?: string;
 
 	@Column({ type: 'mediumtext', nullable: true })
-	content!: string;
+	content?: string;
 
 	@Column({ type: 'mediumtext', nullable: true })
-	htmlContent!: string;
+	htmlContent?: string;
 
 	@OneToMany(() => PostItemImage, (image) => image.post)
 	images!: PostItemImage[];
 
-	@Column()
+	@Column({ default: 0 })
 	imageCount!: number; // Accumulates total uploaded image count.
 
 	@CreateDateColumn()
