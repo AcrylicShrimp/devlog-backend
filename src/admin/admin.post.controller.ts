@@ -57,6 +57,7 @@ export class AdminPostController {
 				'PostItem.modifiedAt',
 				'Category.name'
 			])
+			.where('PostItem.content IS NOT NULL')
 			.orderBy('PostItem.modifiedAt', 'DESC')
 			.limit(20)
 			.getMany();
