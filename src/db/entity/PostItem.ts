@@ -38,13 +38,13 @@ export class PostItem {
 	title!: string;
 
 	@Column({ type: 'mediumtext', nullable: true })
-	content!: string | null;
+	content!: string;
 
 	@Column({ length: 256, nullable: true })
-	contentPreview!: string | null;
+	contentPreview!: string;
 
 	@Column({ type: 'mediumtext', nullable: true })
-	htmlContent!: string | null;
+	htmlContent!: string;
 
 	@OneToMany(() => PostItemImage, (image) => image.post)
 	images!: PostItemImage[];
