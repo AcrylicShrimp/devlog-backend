@@ -329,6 +329,56 @@ export class AdminPostController {
 		});
 	}
 
+	@Delete('admin/posts/:slug/images/:index')
+	async deletePostImage(
+		@Param('slug') slug: string,
+		@Param('index') index: string
+	): Promise<void> {
+		if (!slug || !(slug = slug.trim()))
+			throw new BadRequestException('slug required');
+
+		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
+
+		if (!index || !(index = index.trim()))
+			throw new BadRequestException('index required');
+
+		if (!validator.isNumeric(index))
+			throw new BadRequestException('index must be a integer');
+
+		await this.conn.conn.transaction(async (mgr) => {
+			const post = await mgr.findOne(PostItem, {
+				where: { slug },
+				select: ['id', 'uuid']
+			});
+
+			if (!post) throw new NotFoundException('post not exists');
+
+			const image = await mgr.findOne(PostItemImage, {
+				where: { post, index: parseInt(index) },
+				select: ['id', 'uuid']
+			});
+
+			if (!image) throw new NotFoundException('image not exists');
+
+			try {
+				await this.s3
+					.deleteObjects({
+						Bucket: process.env.AWS_S3_BUCKET_NAME!,
+						Delete: {
+							Objects: [
+								{
+									Key: `${post.uuid}/${image.uuid}`
+								}
+							]
+						}
+					})
+					.promise();
+			} catch {}
+
+			await mgr.remove(image);
+		});
+	}
+
 	@Delete('admin/posts/:slug')
 	async deletePost(@Param('slug') slug: string): Promise<void> {
 		if (!slug || !(slug = slug.trim()))
