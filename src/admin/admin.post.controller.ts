@@ -1,5 +1,5 @@
 import { Controller, UseGuards, Req } from '@nestjs/common';
-import { Get, Post, Put, Delete } from '@nestjs/common';
+import { Get, Post, Put, Delete, Patch } from '@nestjs/common';
 import { Param, Body } from '@nestjs/common';
 import {
 	BadRequestException,
@@ -201,6 +201,108 @@ export class AdminPostController {
 
 			mgr.remove(post.images);
 			mgr.remove(post);
+		});
+	}
+
+	@Patch('admin/posts/:slug')
+	async updatePost(
+		@Param('slug') slug: string,
+		@Body('new-slug') newSlug?: string,
+		@Body('new-access-level') newAccessLevel?: string,
+		@Body('new-category') newCategory?: string,
+		@Body('new-title') newTitle?: string
+	) {
+		if (!slug || !(slug = slug.trim()))
+			throw new BadRequestException('slug required');
+
+		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
+
+		if (newSlug !== undefined) {
+			if (!newSlug || !(newSlug = newSlug.trim()))
+				throw new BadRequestException('invalid new-slug');
+
+			if (!SlugRegex.test(newSlug))
+				throw new BadRequestException('bad new-slug');
+		}
+
+		if (newAccessLevel !== undefined) {
+			if (!newAccessLevel || !(newAccessLevel = newAccessLevel.trim()))
+				throw new BadRequestException('invalid new-access-level');
+
+			if (!isEnum(PostItemAccessLevel, newAccessLevel))
+				throw new BadRequestException('bad new-access-level');
+		}
+
+		if (newCategory !== undefined) {
+			if (!newCategory || !(newCategory = newCategory.trim()))
+				throw new BadRequestException('new-category required');
+
+			if (!validator.isLength(newCategory, { max: 32 }))
+				throw new BadRequestException('new-category too long');
+		}
+
+		if (newTitle !== undefined) {
+			if (!newTitle || !(newTitle = newTitle.trim()))
+				throw new BadRequestException('new-title required');
+
+			if (!validator.isLength(newTitle, { max: 128 }))
+				throw new BadRequestException('new-title too long');
+		}
+
+		if (!newSlug && !newAccessLevel && !newCategory && !newTitle)
+			throw new BadRequestException('no changes');
+
+		await this.conn.conn.transaction(async (mgr) => {
+			const post = await mgr.findOne(PostItem, {
+				where: { slug },
+				select: ['id']
+			});
+
+			if (!post) throw new NotFoundException('post not exists');
+
+			const partialPost = {};
+
+			if (newSlug)
+				Object.assign(partialPost, {
+					slug: newSlug
+				});
+
+			if (newAccessLevel)
+				Object.assign(partialPost, {
+					accessLevel: newAccessLevel
+				});
+
+			if (newCategory) {
+				const categoryEntity = await mgr.findOne(Category, {
+					where: { name: newCategory },
+					select: ['id']
+				});
+
+				if (!categoryEntity)
+					throw new BadRequestException('category not exists');
+
+				Object.assign(partialPost, {
+					category: categoryEntity
+				});
+			}
+
+			if (newTitle)
+				Object.assign(partialPost, {
+					title: newTitle
+				});
+
+			try {
+				await mgr.update(
+					PostItem,
+					{ where: { id: post.id } },
+					partialPost
+				);
+			} catch (err) {
+				if (err instanceof QueryFailedError)
+					throw new ConflictException('slug already taken');
+
+				throw err;
+			}
 		});
 	}
 
