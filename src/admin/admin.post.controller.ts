@@ -62,6 +62,45 @@ export class AdminPostController {
 			.getMany();
 	}
 
+	@Get('admin/posts/:slug')
+	async getPost(@Param('slug') slug: string): Promise<PostItem> {
+		if (!slug || !(slug = slug.trim()))
+			throw new BadRequestException('slug required');
+
+		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
+
+		console.log(await this.conn.conn.manager.find(PostItemImage));
+
+		const post = await this.conn.conn.manager
+			.createQueryBuilder(PostItem, 'PostItem')
+			.leftJoin('PostItem.category', 'Category')
+			.leftJoin('PostItem.images', 'PostItemImage')
+			.select([
+				'PostItem.accessLevel',
+				'PostItem.title',
+				'PostItem.content',
+				'PostItem.htmlContent',
+				'PostItem.createdAt',
+				'PostItem.modifiedAt',
+				'PostItem.category',
+				'Category.name',
+				'PostItemImage.index',
+				'PostItemImage.width',
+				'PostItemImage.height',
+				'PostItemImage.hash',
+				'PostItemImage.url',
+				'PostItemImage.createdAt'
+			])
+			.where('PostItem.slug = :slug', { slug })
+			.andWhere('PostItem.content IS NOT NULL')
+			.orderBy('PostItemImage.index', 'ASC')
+			.getOne();
+
+		if (!post) throw new NotFoundException('no post found');
+
+		return post;
+	}
+
 	@Post('admin/posts')
 	async newPost(
 		@Body('slug') slug: string,
