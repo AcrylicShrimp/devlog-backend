@@ -119,6 +119,216 @@ export class AdminPostController {
 		});
 	}
 
+	@Post('admin/posts/:slug/images')
+	async newPostImage(
+		@Req() req: Request,
+		@Param('slug') slug: string
+	): Promise<number[]> {
+		if (!req.busboy)
+			throw new BadRequestException('only multipart/formdata allowed');
+
+		if (!slug || !(slug = slug.trim()))
+			throw new BadRequestException('slug required');
+
+		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
+
+		return await this.conn.conn.transaction(async (mgr) => {
+			const post = await mgr.findOne(PostItem, {
+				where: { slug },
+				select: ['id', 'uuid', 'imageCount']
+			});
+
+			if (!post) throw new NotFoundException('post not exists');
+
+			interface ImageUpload {
+				upload: S3.ManagedUpload;
+				promise: Promise<void | S3.ManagedUpload.SendData>;
+			}
+			interface ImageMeta {
+				width: number;
+				height: number;
+				hash: string;
+			}
+
+			let error: any = undefined;
+			const imageIds: string[] = [];
+			const imageUploads: ImageUpload[] = [];
+			const imageMetas: Promise<void | ImageMeta>[] = [];
+
+			const abort = () => {
+				imageUploads.forEach((imageUpload) =>
+					imageUpload.upload.abort()
+				);
+
+				for (let index = 0; index < imageIds!.length; index += 1000)
+					this.s3
+						.deleteObjects({
+							Bucket: process.env.AWS_S3_BUCKET_NAME!,
+							Delete: {
+								Objects: imageIds!
+									.slice(index, index + 1000)
+									.map((imageId) => {
+										return {
+											Key: `${post.uuid}/${imageId}`
+										};
+									})
+							}
+						})
+						.promise()
+						.catch();
+			};
+
+			req.busboy.on('file', async (_, body, filename, encoding, mime) => {
+				if (error) {
+					body.resume();
+					return;
+				}
+
+				const imageId = await this.token.generateShort();
+				const image = body.pipe(sharp().rotate());
+
+				const upload = new S3.ManagedUpload({
+					service: this.s3,
+					params: {
+						Bucket: process.env.AWS_S3_BUCKET_NAME!,
+						Key: `${post.uuid}/${imageId}`,
+						ACL: 'private',
+						Body: image.clone().withMetadata(),
+						ContentType: mime
+					}
+				});
+
+				imageIds.push(imageId);
+				imageUploads.push({
+					upload,
+					promise: upload.promise().catch((err) => {
+						if (error) return;
+
+						error = err;
+						abort();
+					})
+				});
+				imageMetas.push(
+					(async () => {
+						try {
+							let hash = '';
+							const { width, height } = await image.metadata();
+
+							if (width && height) {
+								const maxDim = Math.max(width, height);
+								const minComponentCount = Math.round(
+									Math.min(width, height) /
+										Math.floor(maxDim / 5)
+								);
+
+								if (minComponentCount) {
+									const resizedImage = image.resize(
+										maxDim === width
+											? { width: 100 }
+											: { height: 100 }
+									);
+
+									let resizedWidth: number;
+									let resizedHeight: number;
+
+									if (maxDim === width) {
+										resizedWidth = 100;
+										resizedHeight = Math.round(
+											(100 / width) * height
+										);
+									} else {
+										resizedWidth = Math.round(
+											(100 / height) * width
+										);
+										resizedHeight = 100;
+									}
+
+									const componentX =
+										maxDim === width
+											? 5
+											: minComponentCount;
+									const componentY =
+										maxDim === width
+											? minComponentCount
+											: 5;
+
+									hash = encode(
+										Uint8ClampedArray.from(
+											await image
+												.ensureAlpha()
+												.toFormat('raw')
+												.toBuffer()
+										),
+										resizedWidth,
+										resizedHeight,
+										componentX,
+										componentY
+									);
+								}
+							}
+
+							return {
+								width: width || 0,
+								height: height || 0,
+								hash
+							};
+						} catch (err) {
+							if (error) return;
+
+							error = err;
+							abort();
+						}
+					})()
+				);
+			});
+
+			await new Promise((resolve) =>
+				req.pipe(req.busboy).once('finish', () => resolve())
+			);
+
+			const results = await Promise.all([
+				Promise.all(imageUploads.map((upload) => upload.promise)),
+				Promise.all(imageMetas)
+			]);
+
+			if (error) throw error;
+
+			try {
+				await mgr.update(
+					PostItem,
+					{ where: { id: post.id } },
+					{ imageCount: post.imageCount + imageIds.length }
+				);
+
+				const images = await Promise.all(
+					imageIds.map((imageId, index) => {
+						const postImage = new PostItemImage();
+						postImage.uuid = imageId;
+						postImage.index = post.imageCount + index;
+						postImage.width = (<ImageMeta[]>results[1])[
+							index
+						].width;
+						postImage.height = (<ImageMeta[]>results[1])[
+							index
+						].height;
+						postImage.hash = (<ImageMeta[]>results[1])[index].hash;
+						postImage.url = (<S3.ManagedUpload.SendData[]>(
+							results[0]
+						))[index].Location;
+						postImage.post = post;
+
+						return mgr.save(postImage);
+					})
+				);
+
+				return images.map((image) => image.index);
+			} catch (err) {
+				abort();
+				throw err;
+			}
+		});
+	}
+
 	@Delete('admin/posts/:slug')
 	async deletePost(@Param('slug') slug: string): Promise<void> {
 		if (!slug || !(slug = slug.trim()))
