@@ -6,7 +6,7 @@ A private devlog service.
 
 -   Markdown based posts
 -   Supports image uploading to `AWS S3`
--   Supports [bluehash](https://blurha.sh)
+-   Supports [blurhash](https://blurha.sh)
 -   Supports access level
 -   Minimal administration API
 
