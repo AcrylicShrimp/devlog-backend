@@ -594,8 +594,8 @@ export class AdminPostController {
 				PostItem,
 				{ where: { id: post.id } },
 				{
-					contentPreview,
 					content,
+					contentPreview,
 					htmlContent
 				}
 			);
