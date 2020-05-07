@@ -1,7 +1,11 @@
-import { Controller, UseGuards, Req, NotFoundException } from '@nestjs/common';
-import { Get, Post, Delete } from '@nestjs/common';
-import { Param } from '@nestjs/common';
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { Controller, UseGuards, Req } from '@nestjs/common';
+import { Get, Post, Put, Delete } from '@nestjs/common';
+import { Param, Body } from '@nestjs/common';
+import {
+	BadRequestException,
+	ConflictException,
+	NotFoundException
+} from '@nestjs/common';
 import { S3 } from 'aws-sdk';
 import { encode } from 'blurhash';
 import dompurify from 'dompurify';
@@ -56,6 +60,63 @@ export class AdminPostController {
 			.orderBy('PostItem.modifiedAt', 'DESC')
 			.limit(20)
 			.getMany();
+	}
+
+	@Post('admin/posts')
+	async newPost(
+		@Body('slug') slug: string,
+		@Body('access-level') accessLevel: string,
+		@Body('category') category: string,
+		@Body('title') title: string
+	): Promise<void> {
+		if (!slug || !(slug = slug.trim()))
+			throw new BadRequestException('slug required');
+
+		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
+
+		if (!accessLevel || !(accessLevel = accessLevel.trim()))
+			throw new BadRequestException('access-level required');
+
+		if (!isEnum(PostItemAccessLevel, accessLevel))
+			throw new BadRequestException('bad access-level');
+
+		if (!category || !(category = category.trim()))
+			throw new BadRequestException('category required');
+
+		if (!validator.isLength(category, { max: 32 }))
+			throw new BadRequestException('category too long');
+
+		if (!title || !(title = title.trim()))
+			throw new BadRequestException('title required');
+
+		if (!validator.isLength(title, { max: 128 }))
+			throw new BadRequestException('title too long');
+
+		await this.conn.conn.transaction(async (mgr) => {
+			const categoryEntity = await mgr.findOne(Category, {
+				where: { name: category },
+				select: ['id']
+			});
+
+			if (!categoryEntity)
+				throw new BadRequestException('category not exists');
+
+			const post = new PostItem();
+			post.uuid = await this.token.generateShort();
+			post.slug = slug;
+			post.accessLevel = asEnum(PostItemAccessLevel, accessLevel);
+			post.category = categoryEntity;
+			post.title = title;
+
+			try {
+				await mgr.save(post);
+			} catch (err) {
+				if (err instanceof QueryFailedError)
+					throw new ConflictException('slug already taken');
+
+				throw err;
+			}
+		});
 	}
 
 	@Delete('admin/posts/:slug')
