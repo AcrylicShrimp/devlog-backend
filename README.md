@@ -1,6 +1,6 @@
 # devlog-backend
 
-A private devlog service.
+A minimal devlog service.
 
 ## Features
 
