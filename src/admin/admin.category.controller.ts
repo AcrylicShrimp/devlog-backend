@@ -14,6 +14,7 @@ import { AdminGuard } from './admin.guard';
 import { DBConnService } from '../db/db.conn.service';
 
 import { Category } from '../db/entity/Category';
+import { PostItem } from '../db/entity/PostItem';
 
 @Controller()
 @UseGuards(AdminGuard)
@@ -66,6 +67,7 @@ export class AdminCategoryController {
 
 			if (!category) throw new NotFoundException('no category found');
 
+			await mgr.update(PostItem, { category }, { category: undefined });
 			await mgr.remove(category);
 		});
 	}
