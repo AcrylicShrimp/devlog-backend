@@ -1,4 +1,8 @@
 import { Module } from '@nestjs/common';
 
-@Module({})
+import { PostController } from './post.controller';
+
+@Module({
+	controllers: [PostController]
+})
 export class PostModule {}
