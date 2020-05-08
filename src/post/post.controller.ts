@@ -1,5 +1,6 @@
-import { Controller, UseGuards, Session, Query } from '@nestjs/common';
+import { Controller, UseGuards, Session } from '@nestjs/common';
 import { Get } from '@nestjs/common';
+import { Query } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common';
 import validator from 'validator';
 
