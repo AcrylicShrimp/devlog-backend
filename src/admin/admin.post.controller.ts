@@ -240,11 +240,7 @@ export class AdminPostController {
 				});
 
 			try {
-				await mgr.update(
-					PostItem,
-					{ where: { id: post.id } },
-					partialPost
-				);
+				await mgr.update(PostItem, post.id, partialPost);
 			} catch (err) {
 				if (err instanceof QueryFailedError)
 					throw new ConflictException('slug already taken');
@@ -429,11 +425,9 @@ export class AdminPostController {
 			if (error) throw error;
 
 			try {
-				await mgr.update(
-					PostItem,
-					{ where: { id: post.id } },
-					{ imageCount: post.imageCount + imageIds.length }
-				);
+				await mgr.update(PostItem, post.id, {
+					imageCount: post.imageCount + imageIds.length
+				});
 
 				const images = await Promise.all(
 					imageIds.map((imageId, index) => {
@@ -685,15 +679,11 @@ export class AdminPostController {
 				.slice(0, 256)
 				.replace(/\s*&[^\s;]*$/, '');
 
-			await mgr.update(
-				PostItem,
-				{ where: { id: post.id } },
-				{
-					content,
-					contentPreview,
-					htmlContent
-				}
-			);
+			await mgr.update(PostItem, post.id, {
+				content,
+				contentPreview,
+				htmlContent
+			});
 		});
 	}
 }
