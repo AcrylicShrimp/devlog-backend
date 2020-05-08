@@ -1,7 +1,7 @@
 import { Controller, UseGuards, Session } from '@nestjs/common';
 import { Get } from '@nestjs/common';
-import { Query } from '@nestjs/common';
-import { BadRequestException } from '@nestjs/common';
+import { Query, Param } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import validator from 'validator';
 
 import { AdminNonBlockGuard } from '../admin/admin.nonblock.guard';
@@ -120,5 +120,52 @@ export class PostController {
 				.limit(20)
 				.getMany();
 		});
+	}
+
+	@Get('posts/:slug')
+	async getPost(
+		@Session() session: AdminSession,
+		@Param('slug') slug: string
+	) {
+		if (!slug || !(slug = slug.trim()))
+			throw new BadRequestException('slug required');
+
+		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
+
+		let query = this.conn.conn.manager
+			.createQueryBuilder(PostItem, 'PostItem')
+			.leftJoin('PostItem.category', 'Category')
+			.leftJoin('PostItem.images', 'PostItemImage')
+			.select([
+				'PostItem.accessLevel',
+				'PostItem.title',
+				'PostItem.content',
+				'PostItem.htmlContent',
+				'PostItem.createdAt',
+				'PostItem.modifiedAt',
+				'PostItem.category',
+				'Category.name',
+				'PostItemImage.index',
+				'PostItemImage.width',
+				'PostItemImage.height',
+				'PostItemImage.hash',
+				'PostItemImage.url',
+				'PostItemImage.createdAt'
+			])
+			.where('PostItem.content IS NOT NULL');
+
+		// Anonymous users cannot see private posts.
+		if (!session)
+			query = query.andWhere('PostItem.accessLevel != :accessLevel', {
+				accessLevel: PostItemAccessLevel.PRIVATE
+			});
+
+		const post = await query
+			.andWhere('PostItem.slug = :slug', { slug })
+			.getOne();
+
+		if (!post) throw new NotFoundException('no post found');
+
+		return post;
 	}
 }
