@@ -16,7 +16,7 @@ import { SlugRegex } from '../helper/Regex';
 
 @Controller()
 @UseGuards(AdminNonBlockGuard)
-export class PostController {
+export class ViewPostController {
 	constructor(private conn: DBConnService) {}
 
 	@Get('posts')

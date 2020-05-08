@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { AdminModule } from './admin/admin.module';
 import { DBModule } from './db/db.module';
-import { PostModule } from './post/post.module';
+import { ViewModule } from './view/view.module';
 
-@Module({ imports: [AdminModule, DBModule, PostModule] })
+@Module({ imports: [AdminModule, DBModule, ViewModule] })
 export class AppModule {}
