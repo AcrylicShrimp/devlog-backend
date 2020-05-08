@@ -32,19 +32,19 @@ export class PostItem {
 	accessLevel!: PostItemAccessLevel;
 
 	@ManyToOne(() => Category)
-	category!: Category;
+	category?: Category;
 
 	@Column({ length: 128, nullable: false })
 	title!: string;
 
 	@Column({ type: 'mediumtext', nullable: true })
-	content!: string;
+	content?: string;
 
 	@Column({ length: 256, nullable: true })
-	contentPreview!: string;
+	contentPreview?: string;
 
 	@Column({ type: 'mediumtext', nullable: true })
-	htmlContent!: string;
+	htmlContent?: string;
 
 	@OneToMany(() => PostItemImage, (image) => image.post)
 	images!: PostItemImage[];
