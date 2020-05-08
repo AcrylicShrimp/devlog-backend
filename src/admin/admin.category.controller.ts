@@ -20,16 +20,6 @@ import { Category } from '../db/entity/Category';
 export class AdminCategoryController {
 	constructor(private conn: DBConnService) {}
 
-	@Get('admin/categories')
-	async listCategories(): Promise<Category[]> {
-		return this.conn.conn.manager.find(Category, {
-			select: ['name', 'description', 'createdAt', 'modifiedAt'],
-			order: {
-				name: 'ASC'
-			}
-		});
-	}
-
 	@Post('admin/categories')
 	async newCategory(
 		@Body('name') name: string,
