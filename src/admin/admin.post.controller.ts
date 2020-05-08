@@ -61,11 +61,12 @@ export class AdminPostController {
 		if (!isEnum(PostItemAccessLevel, accessLevel))
 			throw new BadRequestException('bad access-level');
 
-		if (!category || !(category = category.trim()))
-			throw new BadRequestException('category required');
+		if (category !== undefined) {
+			category = (category ?? '').trim();
 
-		if (!validator.isLength(category, { max: 32 }))
-			throw new BadRequestException('category too long');
+			if (category && !validator.isLength(category, { max: 32 }))
+				throw new BadRequestException('category too long');
+		}
 
 		if (!title || !(title = title.trim()))
 			throw new BadRequestException('title required');
@@ -74,13 +75,17 @@ export class AdminPostController {
 			throw new BadRequestException('title too long');
 
 		await this.conn.conn.transaction(async (mgr) => {
-			const categoryEntity = await mgr.findOne(Category, {
-				where: { name: category },
-				select: ['id']
-			});
+			let categoryEntity: Category | undefined = undefined;
 
-			if (!categoryEntity)
-				throw new BadRequestException('category not exists');
+			if (category) {
+				categoryEntity = await mgr.findOne(Category, {
+					where: { name: category },
+					select: ['id']
+				});
+
+				if (!categoryEntity)
+					throw new BadRequestException('category not exists');
+			}
 
 			const post = new PostItem();
 			post.uuid = await this.token.generateShort();
@@ -175,10 +180,9 @@ export class AdminPostController {
 		}
 
 		if (newCategory !== undefined) {
-			if (!newCategory || !(newCategory = newCategory.trim()))
-				throw new BadRequestException('new-category required');
+			newCategory = (newCategory ?? '').trim();
 
-			if (!validator.isLength(newCategory, { max: 32 }))
+			if (newCategory && !validator.isLength(newCategory, { max: 32 }))
 				throw new BadRequestException('new-category too long');
 		}
 
@@ -190,7 +194,7 @@ export class AdminPostController {
 				throw new BadRequestException('new-title too long');
 		}
 
-		if (!newSlug && !newAccessLevel && !newCategory && !newTitle)
+		if (!newSlug && !newAccessLevel && newCategory == null && !newTitle)
 			throw new BadRequestException('no changes');
 
 		await this.conn.conn.transaction(async (mgr) => {
@@ -225,7 +229,10 @@ export class AdminPostController {
 				Object.assign(partialPost, {
 					category: categoryEntity
 				});
-			}
+			} else if (newCategory != null)
+				Object.assign(partialPost, {
+					category: undefined
+				});
 
 			if (newTitle)
 				Object.assign(partialPost, {
