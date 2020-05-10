@@ -1,0 +1,36 @@
+name: Dockerize
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  dockerize:
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_ENV: production
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node.js v10
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10
+
+      - name: Install npm packages
+        run: npm install
+
+      - name: Transpile typescript
+        run: npm run build
+
+      - name: Dockerize and push
+        uses: docker/build-push-action@v1.0.1
+        with:
+          registry: $REGISTRY
+          repository: $GITHUB_REPOSITORY
+          username: $USERNAME
+          password: $PASSWORD
+          tags: devlog-front:latest
+          dockerfile: Dockerfile
