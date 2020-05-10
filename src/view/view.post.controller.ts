@@ -81,7 +81,7 @@ export class ViewPostController {
 							? { accessLevel: PostItemAccessLevel.PUBLIC }
 							: null
 					),
-					select: ['modifiedAt']
+					select: ['createdAt']
 				});
 
 				if (!anchor) throw new BadRequestException('anchor not exists');
@@ -109,12 +109,12 @@ export class ViewPostController {
 
 			if (anchor)
 				query = query.andWhere(
-					`PostItem.modifiedAt ${before ? '<' : '>'} :modifiedAt`,
-					{ modifiedAt: anchor.modifiedAt }
+					`PostItem.createdAt ${before ? '<' : '>'} :createdAt`,
+					{ createdAt: anchor.createdAt }
 				);
 
 			return query
-				.orderBy('PostItem.modifiedAt', 'DESC')
+				.orderBy('PostItem.createdAt', 'DESC')
 				.limit(20)
 				.getMany();
 		});
