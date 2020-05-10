@@ -2,7 +2,7 @@
 	"name": "devlog-backend",
 	"version": "1.0.0",
 	"description": "My private devlog system.",
-	"main": "index.js",
+	"main": "dist/main",
 	"scripts": {
 		"build": "nest build",
 		"typeorm:dev": "ts-node ./node_modules/.bin/typeorm",
