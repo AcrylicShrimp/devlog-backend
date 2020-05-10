@@ -4,7 +4,8 @@ import {
 	Column,
 	CreateDateColumn,
 	ManyToOne,
-	UpdateDateColumn
+	UpdateDateColumn,
+	Index
 } from 'typeorm';
 
 import { PostItem } from './PostItem';
@@ -18,6 +19,7 @@ export class PostItemImage {
 	uuid!: string;
 
 	@Column({ nullable: false })
+	@Index()
 	index!: number;
 
 	@Column({ nullable: false })

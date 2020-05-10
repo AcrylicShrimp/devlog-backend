@@ -5,7 +5,8 @@ import {
 	CreateDateColumn,
 	UpdateDateColumn,
 	ManyToOne,
-	OneToMany
+	OneToMany,
+	Index
 } from 'typeorm';
 
 import { Category } from './Category';
@@ -53,6 +54,7 @@ export class PostItem {
 	imageCount!: number; // Accumulates total uploaded image count.
 
 	@CreateDateColumn()
+	@Index()
 	createdAt!: Date;
 
 	@UpdateDateColumn()
