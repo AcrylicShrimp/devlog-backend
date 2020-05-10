@@ -7,8 +7,10 @@
 		"build": "nest build",
 		"typeorm:dev": "ts-node ./node_modules/.bin/typeorm",
 		"typeorm:prd": "typeorm",
-		"cli:create-admin": "ts-node ./src/cli/create-admin",
-		"run:dev": "cross-env NODE_ENV=development nest start --debug --watch"
+		"cli:create-admin:dev": "ts-node ./src/cli/create-admin",
+		"cli:create-admin:prd": "node ./dist/cli/create-admin",
+		"run:dev": "cross-env NODE_ENV=development nest start --debug --watch",
+		"run:prd": "cross-env NODE_ENV=production node dist/main"
 	},
 	"repository": {
 		"type": "git",
