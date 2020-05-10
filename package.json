@@ -24,7 +24,7 @@
 	"bugs": {
 		"url": "https://github.com/AcrylicShrimp/devlog-backend/issues"
 	},
-	"homepage": "https://blog.ashrimp.dev/",
+	"homepage": "https://github.com/AcrylicShrimp/devlog-backend",
 	"dependencies": {
 		"@nestjs/common": "^7.0.8",
 		"@nestjs/core": "^7.0.8",
