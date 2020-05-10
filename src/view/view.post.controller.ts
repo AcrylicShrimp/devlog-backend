@@ -160,6 +160,7 @@ export class ViewPostController {
 
 		const post = await query
 			.andWhere('PostItem.slug = :slug', { slug })
+			.orderBy('PostItemImage.index', 'ASC')
 			.getOne();
 
 		if (!post) throw new NotFoundException('no post found');
