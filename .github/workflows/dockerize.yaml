@@ -9,6 +9,9 @@ jobs:
   dockerize:
     runs-on: ubuntu-18.04
 
+    env:
+      NODE_ENV: development
+
     steps:
       - uses: actions/checkout@v2
       - name: Setup Node.js v10
