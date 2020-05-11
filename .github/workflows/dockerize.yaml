@@ -28,5 +28,5 @@ jobs:
       - name: Dockerize and push to registry
         uses: VaultVulp/gp-docker-action@1.0.1
         with:
-          github-token: $PASSWORD
+          github-token: ${{ secrets.TOKEN }}
           image-name: devlog-backend
