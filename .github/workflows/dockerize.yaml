@@ -25,12 +25,8 @@ jobs:
       - name: Transpile typescript
         run: npm run build
 
-      - name: Dockerize and push
-        uses: docker/build-push-action@v1.0.1
+      - name: Dockerize and push to registry
+        uses: VaultVulp/gp-docker-action@1.0.1
         with:
-          registry: $REGISTRY
-          repository: $GITHUB_REPOSITORY
-          username: $USERNAME
-          password: $PASSWORD
-          tags: devlog-front:latest
-          dockerfile: Dockerfile
+          github-token: $PASSWORD
+          image-name: devlog-backend
