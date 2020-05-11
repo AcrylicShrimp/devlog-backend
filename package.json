@@ -1,7 +1,7 @@
 {
 	"name": "devlog-backend",
 	"version": "1.0.0",
-	"description": "My private devlog system.",
+	"description": "A minimal devlog service.",
 	"main": "dist/main",
 	"scripts": {
 		"build": "nest build",
@@ -17,7 +17,11 @@
 		"url": "git+https://github.com/AcrylicShrimp/devlog-backend.git"
 	},
 	"keywords": [
-		"devlog"
+		"devlog",
+		"blog",
+		"nodejs",
+		"backend-service",
+		"markdown"
 	],
 	"author": "AcrylicShrimp",
 	"license": "ISC",
