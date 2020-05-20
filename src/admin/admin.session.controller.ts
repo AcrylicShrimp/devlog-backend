@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { Delete, Post } from '@nestjs/common';
 import { Body, Param } from '@nestjs/common';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import validator from 'validator';
 
 import { AuthTokenService } from '../auth/auth.token.service';
@@ -31,7 +31,7 @@ export class AdminSessionController {
 			});
 
 			if (!admin || !(await this.token.comparePW(pw, admin.pw)))
-				throw new BadRequestException('bad username or pw');
+				throw new UnauthorizedException('bad username or pw');
 
 			let session = await mgr.findOne(AdminSession, {
 				where: { user: admin },
