@@ -4,7 +4,7 @@ import {
 	Column,
 	CreateDateColumn,
 	OneToOne,
-	JoinColumn
+	JoinColumn,
 } from 'typeorm';
 
 import { Admin } from './Admin';

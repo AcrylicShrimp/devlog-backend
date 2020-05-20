@@ -2,7 +2,7 @@ import {
 	Injectable,
 	CanActivate,
 	ExecutionContext,
-	UnauthorizedException
+	UnauthorizedException,
 } from '@nestjs/common';
 import { MoreThan } from 'typeorm';
 import validator from 'validator';
@@ -30,9 +30,9 @@ export class AdminGuard implements CanActivate {
 			const session = await mgr.findOne(AdminSession, {
 				where: {
 					token,
-					usedAt: MoreThan(new Date(Date.now() - TOKEN_EXPIRY))
+					usedAt: MoreThan(new Date(Date.now() - TOKEN_EXPIRY)),
 				},
-				relations: ['user']
+				relations: ['user'],
 			});
 
 			if (!session) throw new UnauthorizedException();

@@ -4,7 +4,7 @@ import { Body, Param } from '@nestjs/common';
 import {
 	BadRequestException,
 	ConflictException,
-	NotFoundException
+	NotFoundException,
 } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
 import validator from 'validator';
@@ -62,7 +62,7 @@ export class AdminCategoryController {
 		await this.conn.conn.transaction(async (mgr) => {
 			const category = await mgr.findOne(Category, {
 				where: { name },
-				select: ['id']
+				select: ['id'],
 			});
 
 			if (!category) throw new NotFoundException('no category found');
@@ -101,7 +101,7 @@ export class AdminCategoryController {
 
 		await this.conn.conn.transaction(async (mgr) => {
 			const category = await mgr.findOne(Category, {
-				where: { name }
+				where: { name },
 			});
 
 			if (!category) throw new NotFoundException('no category found');

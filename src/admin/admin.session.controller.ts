@@ -27,7 +27,7 @@ export class AdminSessionController {
 		return await this.conn.conn.transaction(async (mgr) => {
 			const admin = await mgr.findOne(Admin, {
 				where: { username },
-				select: ['id', 'pw']
+				select: ['id', 'pw'],
 			});
 
 			if (!admin || !(await this.token.comparePW(pw, admin.pw)))
@@ -35,7 +35,7 @@ export class AdminSessionController {
 
 			let session = await mgr.findOne(AdminSession, {
 				where: { user: admin },
-				select: ['id']
+				select: ['id'],
 			});
 
 			if (session) await mgr.remove(session);
@@ -61,8 +61,8 @@ export class AdminSessionController {
 
 		await this.conn.conn.transaction(async (mgr) => {
 			const session = await mgr.findOne(AdminSession, {
-				where: { token: token },
-				select: ['id']
+				where: { token },
+				select: ['id'],
 			});
 
 			if (session) await mgr.remove(session);

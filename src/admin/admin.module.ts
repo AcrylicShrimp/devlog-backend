@@ -11,7 +11,7 @@ import { AdminPostController } from './admin.post.controller';
 	controllers: [
 		AdminSessionController,
 		AdminCategoryController,
-		AdminPostController
-	]
+		AdminPostController,
+	],
 })
 export class AdminModule {}

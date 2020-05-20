@@ -19,7 +19,7 @@ import { AppModule } from './app.module';
 		cors({
 			origin: ['https://blog.ashrimp.dev'],
 			optionsSuccessStatus: 200,
-			methods: 'GET,HEAD,PUT,PATCH,POST,DELETE'
+			methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
 		})
 	);
 	app.use(busboy());

@@ -4,7 +4,7 @@ import { Param, Body } from '@nestjs/common';
 import {
 	BadRequestException,
 	ConflictException,
-	NotFoundException
+	NotFoundException,
 } from '@nestjs/common';
 import { S3 } from 'aws-sdk';
 import { encode } from 'blurhash';
@@ -39,7 +39,7 @@ export class AdminPostController {
 			apiVersion: '2006-03-01',
 			accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
 			secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-			region: process.env.AWS_REGION!
+			region: process.env.AWS_REGION!,
 		});
 	}
 
@@ -80,7 +80,7 @@ export class AdminPostController {
 			if (category) {
 				categoryEntity = await mgr.findOne(Category, {
 					where: { name: category },
-					select: ['id']
+					select: ['id'],
 				});
 
 				if (!categoryEntity)
@@ -121,7 +121,7 @@ export class AdminPostController {
 					'PostItem.id',
 					'PostItem.uuid',
 					'PostItemImage.id',
-					'PostItemImage.uuid'
+					'PostItemImage.uuid',
 				])
 				.getOne();
 
@@ -137,10 +137,10 @@ export class AdminPostController {
 									.slice(index, index + 1000)
 									.map((image) => {
 										return {
-											Key: `${post.uuid}/${image.uuid}`
+											Key: `${post.uuid}/${image.uuid}`,
 										};
-									})
-							}
+									}),
+							},
 						})
 						.promise();
 				} catch {}
@@ -200,7 +200,7 @@ export class AdminPostController {
 		await this.conn.conn.transaction(async (mgr) => {
 			const post = await mgr.findOne(PostItem, {
 				where: { slug },
-				select: ['id']
+				select: ['id'],
 			});
 
 			if (!post) throw new NotFoundException('post not exists');
@@ -209,34 +209,34 @@ export class AdminPostController {
 
 			if (newSlug)
 				Object.assign(partialPost, {
-					slug: newSlug
+					slug: newSlug,
 				});
 
 			if (newAccessLevel)
 				Object.assign(partialPost, {
-					accessLevel: newAccessLevel
+					accessLevel: newAccessLevel,
 				});
 
 			if (newCategory) {
 				const categoryEntity = await mgr.findOne(Category, {
 					where: { name: newCategory },
-					select: ['id']
+					select: ['id'],
 				});
 
 				if (!categoryEntity)
 					throw new BadRequestException('category not exists');
 
 				Object.assign(partialPost, {
-					category: categoryEntity
+					category: categoryEntity,
 				});
 			} else if (newCategory != null)
 				Object.assign(partialPost, {
-					category: undefined
+					category: undefined,
 				});
 
 			if (newTitle)
 				Object.assign(partialPost, {
-					title: newTitle
+					title: newTitle,
 				});
 
 			try {
@@ -266,7 +266,7 @@ export class AdminPostController {
 		return await this.conn.conn.transaction(async (mgr) => {
 			const post = await mgr.findOne(PostItem, {
 				where: { slug },
-				select: ['id', 'uuid', 'imageCount']
+				select: ['id', 'uuid', 'imageCount'],
 			});
 
 			if (!post) throw new NotFoundException('post not exists');
@@ -300,10 +300,10 @@ export class AdminPostController {
 									.slice(index, index + 1000)
 									.map((imageId) => {
 										return {
-											Key: `${post.uuid}/${imageId}`
+											Key: `${post.uuid}/${imageId}`,
 										};
-									})
-							}
+									}),
+							},
 						})
 						.promise()
 						.catch();
@@ -325,8 +325,8 @@ export class AdminPostController {
 						Key: `${post.uuid}/${imageId}`,
 						ACL: 'private',
 						Body: image.clone().withMetadata(),
-						ContentType: mime
-					}
+						ContentType: mime,
+					},
 				});
 
 				imageIds.push(imageId);
@@ -337,7 +337,7 @@ export class AdminPostController {
 
 						error = err;
 						abort();
-					})
+					}),
 				});
 				imageMetas.push(
 					(async () => {
@@ -401,7 +401,7 @@ export class AdminPostController {
 							return {
 								width: width || 0,
 								height: height || 0,
-								hash
+								hash,
 							};
 						} catch (err) {
 							if (error) return;
@@ -419,14 +419,14 @@ export class AdminPostController {
 
 			const results = await Promise.all([
 				Promise.all(imageUploads.map((upload) => upload.promise)),
-				Promise.all(imageMetas)
+				Promise.all(imageMetas),
 			]);
 
 			if (error) throw error;
 
 			try {
 				await mgr.update(PostItem, post.id, {
-					imageCount: post.imageCount + imageIds.length
+					imageCount: post.imageCount + imageIds.length,
 				});
 
 				const images = await Promise.all(
@@ -477,14 +477,14 @@ export class AdminPostController {
 		await this.conn.conn.transaction(async (mgr) => {
 			const post = await mgr.findOne(PostItem, {
 				where: { slug },
-				select: ['id', 'uuid']
+				select: ['id', 'uuid'],
 			});
 
 			if (!post) throw new NotFoundException('post not exists');
 
 			const image = await mgr.findOne(PostItemImage, {
 				where: { post, index: parseInt(index) },
-				select: ['id', 'uuid']
+				select: ['id', 'uuid'],
 			});
 
 			if (!image) throw new NotFoundException('image not exists');
@@ -496,10 +496,10 @@ export class AdminPostController {
 						Delete: {
 							Objects: [
 								{
-									Key: `${post.uuid}/${image.uuid}`
-								}
-							]
-						}
+									Key: `${post.uuid}/${image.uuid}`,
+								},
+							],
+						},
 					})
 					.promise();
 			} catch {}
@@ -528,7 +528,7 @@ export class AdminPostController {
 				.select([
 					'PostItem.id',
 					'PostItemImage.index',
-					'PostItemImage.url'
+					'PostItemImage.url',
 				])
 				.where('PostItem.slug = :slug', { slug })
 				.getOne();
@@ -648,7 +648,7 @@ export class AdminPostController {
 							hljs.highlight(
 								hljs.getLanguage(lang) ? lang : 'plaintext',
 								code
-							).value
+							).value,
 					},
 					(err, parseResult) =>
 						err
@@ -665,7 +665,7 @@ export class AdminPostController {
 				parse(
 					content,
 					{
-						renderer: plainRenderer
+						renderer: plainRenderer,
 					},
 					(err, parseResult) =>
 						err
@@ -682,7 +682,7 @@ export class AdminPostController {
 			await mgr.update(PostItem, post.id, {
 				content,
 				contentPreview,
-				htmlContent
+				htmlContent,
 			});
 		});
 	}

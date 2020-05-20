@@ -6,7 +6,7 @@ import {
 	UpdateDateColumn,
 	ManyToOne,
 	OneToMany,
-	Index
+	Index,
 } from 'typeorm';
 
 import { Category } from './Category';
@@ -15,7 +15,7 @@ import { PostItemImage } from './PostItemImage';
 export enum PostItemAccessLevel {
 	PUBLIC = 'public',
 	UNLISTED = 'unlisted',
-	PRIVATE = 'private'
+	PRIVATE = 'private',
 }
 
 @Entity()

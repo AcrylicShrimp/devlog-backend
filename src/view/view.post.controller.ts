@@ -59,7 +59,7 @@ export class ViewPostController {
 			if (category) {
 				categoryEntity = await mgr.findOne(Category, {
 					where: { name: category },
-					select: ['id']
+					select: ['id'],
 				});
 
 				if (!categoryEntity)
@@ -72,7 +72,7 @@ export class ViewPostController {
 				anchor = await mgr.findOne(PostItem, {
 					where: Object.assign(
 						{
-							slug: before || after
+							slug: before || after,
 						},
 						categoryEntity
 							? { category: { id: categoryEntity.id } }
@@ -81,7 +81,7 @@ export class ViewPostController {
 							? { accessLevel: PostItemAccessLevel.PUBLIC }
 							: null
 					),
-					select: ['createdAt']
+					select: ['createdAt'],
 				});
 
 				if (!anchor) throw new BadRequestException('anchor not exists');
@@ -97,14 +97,14 @@ export class ViewPostController {
 					'PostItem.contentPreview',
 					'PostItem.createdAt',
 					'PostItem.modifiedAt',
-					'Category.name'
+					'Category.name',
 				])
 				.where('PostItem.content IS NOT NULL');
 
 			// Anonymous users only can see public posts.
 			if (!session)
 				query = query.andWhere('PostItem.accessLevel = :accessLevel', {
-					accessLevel: PostItemAccessLevel.PUBLIC
+					accessLevel: PostItemAccessLevel.PUBLIC,
 				});
 
 			if (anchor)
@@ -148,14 +148,14 @@ export class ViewPostController {
 				'PostItemImage.height',
 				'PostItemImage.hash',
 				'PostItemImage.url',
-				'PostItemImage.createdAt'
+				'PostItemImage.createdAt',
 			])
 			.where('PostItem.content IS NOT NULL');
 
 		// Anonymous users cannot see private posts.
 		if (!session)
 			query = query.andWhere('PostItem.accessLevel != :accessLevel', {
-				accessLevel: PostItemAccessLevel.PRIVATE
+				accessLevel: PostItemAccessLevel.PRIVATE,
 			});
 
 		const post = await query

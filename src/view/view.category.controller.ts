@@ -14,8 +14,8 @@ export class ViewCategoryController {
 		return this.conn.conn.manager.find(Category, {
 			select: ['name', 'description', 'createdAt', 'modifiedAt'],
 			order: {
-				name: 'ASC'
-			}
+				name: 'ASC',
+			},
 		});
 	}
 }

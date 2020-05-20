@@ -16,8 +16,8 @@ const readline = createInterface({
 		write: (chunk, encoding, cb) => {
 			if (!muted) process.stdout.write(chunk, encoding);
 			cb();
-		}
-	})
+		},
+	}),
 });
 const question = (query: string): Promise<string> => {
 	muted = false;

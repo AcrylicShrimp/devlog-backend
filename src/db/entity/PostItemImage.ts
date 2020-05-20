@@ -5,7 +5,7 @@ import {
 	CreateDateColumn,
 	ManyToOne,
 	UpdateDateColumn,
-	Index
+	Index,
 } from 'typeorm';
 
 import { PostItem } from './PostItem';
