@@ -101,6 +101,11 @@ export class ViewPostController {
 				])
 				.where('PostItem.content IS NOT NULL');
 
+			if (categoryEntity)
+				query = query.andWhere('PostItem.category = :category', {
+					category: categoryEntity.id,
+				});
+
 			// Anonymous users only can see public posts.
 			if (!session)
 				query = query.andWhere('PostItem.accessLevel = :accessLevel', {
