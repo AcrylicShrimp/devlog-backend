@@ -119,9 +119,11 @@ export class ViewPostController {
 					{ createdAt: anchor.createdAt }
 				);
 
-			query = query.orderBy('PostItem.createdAt', 'DESC');
+			query = query.orderBy('PostItem.createdAt', after ? 'ASC' : 'DESC');
 
-			const posts = await query.limit(20).getMany();
+			let posts = await query.limit(20).getMany();
+
+			if (after) posts = posts.reverse();
 
 			const hasBefore =
 				unlimitedCount !== 0 &&
