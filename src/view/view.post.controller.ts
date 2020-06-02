@@ -72,7 +72,7 @@ export class ViewPostController {
 				anchor = await mgr.findOne(PostItem, {
 					where: Object.assign(
 						{
-							slug: before || after,
+							slug: before || after, // TODO: Add a content NOT NULL condition here.
 						},
 						categoryEntity
 							? { category: { id: categoryEntity.id } }
