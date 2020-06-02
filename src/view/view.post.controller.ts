@@ -25,7 +25,7 @@ export class ViewPostController {
 		@Query('category') category: string,
 		@Query('before') before: string,
 		@Query('after') after: string
-	): Promise<PostItem[]> {
+	): Promise<{ posts: PostItem[]; hasBefore: boolean; hasAfter: boolean }> {
 		if (category !== undefined) {
 			if (!category || !(category = category.trim()))
 				throw new BadRequestException('invalid category');
@@ -107,16 +107,46 @@ export class ViewPostController {
 					accessLevel: PostItemAccessLevel.PUBLIC,
 				});
 
+			let unlimitedQuery = query
+				.clone()
+				.select(['PostItem.id'])
+				.orderBy('PostItem.createdAt', 'DESC');
+			const unlimitedCount = await unlimitedQuery.getCount();
+
 			if (anchor)
 				query = query.andWhere(
 					`PostItem.createdAt ${before ? '<' : '>'} :createdAt`,
 					{ createdAt: anchor.createdAt }
 				);
 
-			return query
-				.orderBy('PostItem.createdAt', 'DESC')
-				.limit(20)
-				.getMany();
+			query = query.orderBy('PostItem.createdAt', 'DESC');
+
+			const posts = await query.limit(20).getMany();
+
+			const hasBefore =
+				unlimitedCount !== 0 &&
+				((posts.length === 0 && !before) ||
+					(posts.length !== 0 &&
+						(await unlimitedQuery
+							.andWhere('PostItem.createdAt < :createdAt', {
+								createdAt: posts[posts.length - 1].createdAt,
+							})
+							.getCount()) !== 0));
+			const hasAfter =
+				unlimitedCount !== 0 &&
+				((posts.length === 0 && !after) ||
+					(posts.length !== 0 &&
+						(await unlimitedQuery
+							.andWhere('PostItem.createdAt > :createdAt', {
+								createdAt: posts[0].createdAt,
+							})
+							.getCount()) !== 0));
+
+			return {
+				posts,
+				hasBefore,
+				hasAfter,
+			};
 		});
 	}
 
