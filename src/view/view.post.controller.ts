@@ -128,6 +128,7 @@ export class ViewPostController {
 				((posts.length === 0 && !before) ||
 					(posts.length !== 0 &&
 						(await unlimitedQuery
+							.clone()
 							.andWhere('PostItem.createdAt < :createdAt', {
 								createdAt: posts[posts.length - 1].createdAt,
 							})
