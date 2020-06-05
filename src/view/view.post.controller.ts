@@ -81,14 +81,10 @@ export class ViewPostController {
 							? { accessLevel: PostItemAccessLevel.PUBLIC }
 							: null
 					),
-					select: ['slug', 'createdAt'],
+					select: ['createdAt'],
 				});
 
 				if (!anchor) throw new BadRequestException('anchor not exists');
-
-				console.log(before ? 'before' : 'after', ': ', before || after);
-				console.log('slug: ', anchor.slug);
-				console.log('createdAt: ', anchor.createdAt);
 			}
 
 			let query = mgr
