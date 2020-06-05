@@ -71,7 +71,7 @@ export class ViewPostController {
 			if (before || after) {
 				let testQuery = mgr
 					.createQueryBuilder(PostItem, 'PostItem')
-					.select(['CAST(PostItem.createdAt AS char)', 'createdAt'])
+					.select(['PostItem.createdAt', 'createdAt'])
 					.where('PostItem.content IS NOT NULL');
 
 				if (categoryEntity)
