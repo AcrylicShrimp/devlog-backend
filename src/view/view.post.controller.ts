@@ -69,6 +69,35 @@ export class ViewPostController {
 			let anchor: PostItem | undefined = undefined;
 
 			if (before || after) {
+				let testQuery = mgr
+					.createQueryBuilder(PostItem, 'PostItem')
+					.select(['PostItem.createdAt'])
+					.where('PostItem.content IS NOT NULL');
+
+				if (categoryEntity)
+					testQuery = testQuery.andWhere(
+						'PostItem.category = :category',
+						{
+							category: categoryEntity.id,
+						}
+					);
+
+				if (!session)
+					testQuery = testQuery.andWhere(
+						'PostItem.accessLevel = :accessLevel',
+						{
+							accessLevel: PostItemAccessLevel.PUBLIC,
+						}
+					);
+
+				const test = await testQuery
+					.andWhere('PostItem.slug = :slug', {
+						slug: before || after,
+					})
+					.getRawOne();
+
+				console.log('Test:', test);
+
 				anchor = await mgr.findOne(PostItem, {
 					where: Object.assign(
 						{
