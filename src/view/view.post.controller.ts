@@ -71,7 +71,7 @@ export class ViewPostController {
 			if (before || after) {
 				let testQuery = mgr
 					.createQueryBuilder(PostItem, 'PostItem')
-					.select(['PostItem.createdAt'])
+					.select(['CAST(PostItem.createdAt as char)'])
 					.where('PostItem.content IS NOT NULL');
 
 				if (categoryEntity)
@@ -96,7 +96,10 @@ export class ViewPostController {
 					})
 					.getRawOne();
 
-				console.log('Test:', test);
+				console.log(
+					'@@@@@@@@@@@@@@@@@@@Test:',
+					test.PostItem_createdAt
+				);
 
 				anchor = await mgr.findOne(PostItem, {
 					where: Object.assign(
