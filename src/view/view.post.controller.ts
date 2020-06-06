@@ -71,7 +71,7 @@ export class ViewPostController {
 			if (before || after) {
 				let query = mgr
 					.createQueryBuilder(PostItem, 'PostItem')
-					.select(['PostItem.createdAt'])
+					.select('PostItem.createdAt', 'createdAt')
 					.where('PostItem.content IS NOT NULL');
 
 				if (categoryEntity)
@@ -99,15 +99,13 @@ export class ViewPostController {
 			let query = mgr
 				.createQueryBuilder(PostItem, 'PostItem')
 				.leftJoin('PostItem.category', 'Category')
-				.select([
-					'PostItem.slug',
-					'PostItem.accessLevel',
-					'PostItem.title',
-					'PostItem.contentPreview',
-					'PostItem.createdAt',
-					'PostItem.modifiedAt',
-					'Category.name',
-				])
+				.select('PostItem.slug', 'slug')
+				.addSelect('PostItem.accessLevel', 'accessLevel')
+				.addSelect('PostItem.title', 'title')
+				.addSelect('PostItem.contentPreview', 'contentPreview')
+				.addSelect('PostItem.createdAt', 'createdAt')
+				.addSelect('PostItem.modifiedAt', 'modifiedAt')
+				.addSelect('Category.name', 'category')
 				.where('PostItem.content IS NOT NULL');
 
 			if (categoryEntity)
@@ -135,7 +133,13 @@ export class ViewPostController {
 
 			query = query.orderBy('PostItem.createdAt', after ? 'ASC' : 'DESC');
 
-			let posts = await query.limit(20).getRawMany();
+			let posts = (await query.limit(20).getRawMany()).map((post) => {
+				post.category = {
+					name: post.category,
+				};
+
+				return post;
+			});
 
 			if (after) posts = posts.reverse();
 
