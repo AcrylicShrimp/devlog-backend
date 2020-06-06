@@ -66,52 +66,32 @@ export class ViewPostController {
 					throw new BadRequestException('category not exists');
 			}
 
-			let anchor: PostItem | undefined = undefined;
+			let anchor: { createdAt: string } | undefined = undefined;
 
 			if (before || after) {
-				let testQuery = mgr
+				let query = mgr
 					.createQueryBuilder(PostItem, 'PostItem')
 					.select(['PostItem.createdAt', 'createdAt'])
 					.where('PostItem.content IS NOT NULL');
 
 				if (categoryEntity)
-					testQuery = testQuery.andWhere(
-						'PostItem.category = :category',
-						{
-							category: categoryEntity.id,
-						}
-					);
+					query = query.andWhere('PostItem.category = :category', {
+						category: categoryEntity.id,
+					});
 
 				if (!session)
-					testQuery = testQuery.andWhere(
+					query = query.andWhere(
 						'PostItem.accessLevel = :accessLevel',
 						{
 							accessLevel: PostItemAccessLevel.PUBLIC,
 						}
 					);
 
-				const test = await testQuery
+				anchor = await query
 					.andWhere('PostItem.slug = :slug', {
 						slug: before || after,
 					})
 					.getRawOne();
-
-				console.log('@@@@@@@@@@@@@@@@@@@Test:', test.createdAt);
-
-				anchor = await mgr.findOne(PostItem, {
-					where: Object.assign(
-						{
-							slug: before || after, // TODO: Add a content NOT NULL condition here.
-						},
-						categoryEntity
-							? { category: { id: categoryEntity.id } }
-							: null,
-						!session // Prevents info leaks
-							? { accessLevel: PostItemAccessLevel.PUBLIC }
-							: null
-					),
-					select: ['createdAt'],
-				});
 
 				if (!anchor) throw new BadRequestException('anchor not exists');
 			}
