@@ -135,7 +135,7 @@ export class ViewPostController {
 
 			query = query.orderBy('PostItem.createdAt', after ? 'ASC' : 'DESC');
 
-			let posts = await query.limit(20).getMany();
+			let posts = await query.limit(20).getRawMany();
 
 			if (after) posts = posts.reverse();
 
