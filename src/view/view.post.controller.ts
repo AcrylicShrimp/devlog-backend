@@ -134,9 +134,10 @@ export class ViewPostController {
 			query = query.orderBy('PostItem.createdAt', after ? 'ASC' : 'DESC');
 
 			let posts = (await query.limit(20).getRawMany()).map((post) => {
-				post.category = {
-					name: post.category,
-				};
+				if (post.category)
+					post.category = {
+						name: post.category,
+					};
 
 				return post;
 			});
