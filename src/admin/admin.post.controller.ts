@@ -316,7 +316,7 @@ export class AdminPostController {
 				}
 
 				const imageId = await this.token.generateShort();
-				const image = body.pipe(sharp({ pages: -1 }).rotate());
+				const image = body.pipe(sharp().rotate());
 
 				const upload = new S3.ManagedUpload({
 					service: this.s3,
