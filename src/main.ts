@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 
 import { NestFactory } from '@nestjs/core';
-import { Request, Response, NextFunction } from 'express';
+import * as Sentry from '@sentry/node';
 
 import busboy from 'connect-busboy';
 import cors from 'cors';
@@ -12,7 +12,17 @@ import { AppModule } from './app.module';
 (async () => {
 	dotenv.config();
 
+	if (process.env.SENTRY_DSN) Sentry.init({ dsn: process.env.SENTRY_DSN });
+
 	const app = await NestFactory.create(AppModule);
+
+	if (process.env.SENTRY_DSN)
+		app.use(
+			Sentry.Handlers.requestHandler({
+				request: ['session'],
+				user: false,
+			})
+		);
 
 	app.use(helmet());
 	app.use(
