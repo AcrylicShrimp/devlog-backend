@@ -9,6 +9,8 @@ import helmet from 'helmet';
 
 import { AppModule } from './app.module';
 
+import { AllExceptionFilter } from './error/all.filter';
+
 (async () => {
 	dotenv.config();
 
@@ -33,6 +35,8 @@ import { AppModule } from './app.module';
 		})
 	);
 	app.use(busboy());
+
+	app.useGlobalFilters(new AllExceptionFilter());
 
 	await app.listen(8000, '0.0.0.0');
 })();

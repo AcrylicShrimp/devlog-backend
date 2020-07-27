@@ -1,25 +1,39 @@
-import { Catch, ExceptionFilter, ArgumentsHost } from '@nestjs/common';
+import {
+	ArgumentsHost,
+	Catch,
+	ExceptionFilter,
+	HttpException,
+	HttpStatus,
+} from '@nestjs/common';
 import * as Sentry from '@sentry/node';
-import { ErrorRequestHandler } from 'express';
-
-let sentryErrorHandler: ErrorRequestHandler | null = null;
-
-if (process.env.SENTRY_DSN) sentryErrorHandler = Sentry.Handlers.errorHandler();
+import { ErrorRequestHandler, Response } from 'express';
 
 @Catch()
 export class AllExceptionFilter implements ExceptionFilter {
-	catch(exception: unknown, host: ArgumentsHost) {
-		if (sentryErrorHandler) {
-			const http = host.switchToHttp();
+	constructor(private sentryErrorHandler: ErrorRequestHandler | null = null) {
+		if (process.env.SENTRY_DSN)
+			sentryErrorHandler = Sentry.Handlers.errorHandler();
+	}
 
-			sentryErrorHandler(
-				exception,
+	catch(error: Error, host: ArgumentsHost) {
+		const http = host.switchToHttp();
+
+		if (this.sentryErrorHandler)
+			this.sentryErrorHandler(
+				error,
 				http.getRequest(),
 				http.getResponse(),
 				http.getNext()
 			);
-		}
 
-		throw exception;
+		http.getResponse<Response>()
+			.status(
+				error instanceof HttpException
+					? error.getStatus()
+					: HttpStatus.INTERNAL_SERVER_ERROR
+			)
+			.end();
+
+		throw error;
 	}
 }
