@@ -7,6 +7,7 @@ A minimal devlog service.
 -   Markdown based posts
 -   Supports image uploading to `AWS S3`
 -   Supports [blurhash](https://blurha.sh)
+-   Supports [sentry.io](https://sentry.io)
 -   Supports access level
 -   Minimal administration API
 
