@@ -385,7 +385,7 @@ export class AdminPostController {
 
 									hash = encode(
 										Uint8ClampedArray.from(
-											await image
+											await resizedImage
 												.ensureAlpha()
 												.toFormat('raw')
 												.toBuffer()
