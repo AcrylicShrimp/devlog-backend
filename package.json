@@ -30,8 +30,10 @@
 	},
 	"homepage": "https://github.com/AcrylicShrimp/devlog-backend",
 	"dependencies": {
+		"@elastic/elasticsearch": "^7.8.0",
 		"@nestjs/common": "^7.3.2",
 		"@nestjs/core": "^7.3.2",
+		"@nestjs/elasticsearch": "^7.1.0",
 		"@nestjs/platform-express": "^7.3.2",
 		"@ntegral/nestjs-sentry": "^1.0.3",
 		"aws-sdk": "^2.715.0",
