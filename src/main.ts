@@ -9,7 +9,7 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 (async () => {
-	dotenv.config();
+	if (process.env.NODE_ENV !== 'production') dotenv.config();
 
 	const app = await NestFactory.create(AppModule);
 
