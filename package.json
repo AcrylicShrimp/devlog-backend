@@ -35,7 +35,6 @@
 		"@nestjs/core": "^7.3.2",
 		"@nestjs/elasticsearch": "^7.1.0",
 		"@nestjs/platform-express": "^7.3.2",
-		"@ntegral/nestjs-sentry": "^1.0.3",
 		"aws-sdk": "^2.715.0",
 		"bcrypt": "^4.0.1",
 		"blurhash": "^1.1.3",
