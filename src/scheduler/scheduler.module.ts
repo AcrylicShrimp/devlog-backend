@@ -3,11 +3,11 @@ import {
 	ElasticsearchModule,
 	ElasticsearchService,
 } from '@nestjs/elasticsearch';
-import { parse, Renderer } from 'marked';
 
 import { DBConnService } from '../db/db.conn.service';
 
 import { PostItem } from '../db/entity/PostItem';
+import { parseAsText } from '../helper/MDRenderer';
 
 @Module({
 	imports: [
@@ -56,88 +56,6 @@ export class SchedulerModule {
 
 			console.log(posts);
 
-			const textRenderer = new (class extends Renderer {
-				code() {
-					return '';
-				}
-
-				blockquote(quote: string) {
-					return `${quote}\n`;
-				}
-
-				html() {
-					return '';
-				}
-
-				heading(text: string) {
-					return `${text}\n`;
-				}
-
-				hr() {
-					return '';
-				}
-
-				list(body: string) {
-					return `${body}\n`;
-				}
-
-				listitem(text: string) {
-					return `${text}\n`;
-				}
-
-				checkbox() {
-					return '';
-				}
-
-				paragraph(text: string) {
-					return `${text}\n`;
-				}
-
-				table(header: string, body: string) {
-					return `${header}\n${body}\n`;
-				}
-
-				tablerow(content: string) {
-					return `${content}\n`;
-				}
-
-				tablecell(content: string) {
-					return `${content}\n`;
-				}
-
-				strong(text: string) {
-					return text;
-				}
-
-				em(text: string) {
-					return text;
-				}
-
-				codespan(text: string) {
-					return text;
-				}
-
-				br() {
-					return '';
-				}
-
-				del(text: string) {
-					return text;
-				}
-
-				link(href: string | null, title: string | null, text: string) {
-					return `${href} ${title} ${text} `;
-				}
-
-				image() {
-					return '';
-				}
-
-				text(text: string) {
-					return text;
-				}
-			})();
-
 			for (let index = 0; index < posts.length; ++index) {
 				if (
 					(
@@ -165,24 +83,6 @@ export class SchedulerModule {
 
 				if (!post) continue;
 
-				const textContent = await new Promise<string>(
-					(resolve, reject) =>
-						parse(
-							post.content!,
-							{
-								renderer: textRenderer,
-							},
-							(err, parseResult) =>
-								err
-									? reject(err)
-									: resolve(
-											parseResult
-												.trim()
-												.replace(/\s+/g, ' ')
-									  )
-						)
-				);
-
 				console.log(
 					await this.es.create({
 						id: posts[index].slug,
@@ -191,7 +91,7 @@ export class SchedulerModule {
 							accessLevel: post.accessLevel,
 							category: post.category || '',
 							title: post.title,
-							content: textContent,
+							content: await parseAsText(post.content!),
 							createdAt: post.createdAt,
 						},
 					})

@@ -8,11 +8,7 @@ import {
 } from '@nestjs/common';
 import { S3 } from 'aws-sdk';
 import { encode } from 'blurhash';
-import dompurify from 'dompurify';
 import { Request } from 'express';
-import hljs from 'highlight.js';
-import { JSDOM } from 'jsdom';
-import { parse, Renderer } from 'marked';
 import sharp from 'sharp';
 import { QueryFailedError } from 'typeorm';
 import validator from 'validator';
@@ -27,6 +23,7 @@ import { PostItem, PostItemAccessLevel } from '../db/entity/PostItem';
 import { PostItemImage } from '../db/entity/PostItemImage';
 
 import { asEnum, isEnum } from '../helper/Enum';
+import { parseAsPlain, parseAsHTMLWithImage } from '../helper/MDRenderer';
 import { SlugRegex } from '../helper/Regex';
 
 @Controller()
@@ -541,148 +538,15 @@ export class AdminPostController {
 				(image) => (postImage[image.index] = image.url)
 			);
 
-			const renderer = new (class extends Renderer {
-				image(href: string | null, title: string | null, text: string) {
-					if (href) {
-						const match = href.match(/\$(\d+)$/i);
-
-						if (match) {
-							const index = parseInt(match[1]);
-
-							if (!isNaN(index) && index in postImage)
-								href = postImage[index];
-						}
-					}
-
-					return super.image(href, title, text);
-				}
-			})();
-			const plainRenderer = new (class extends Renderer {
-				code() {
-					return '';
-				}
-
-				blockquote() {
-					return '';
-				}
-
-				html() {
-					return '';
-				}
-
-				heading() {
-					return '';
-				}
-
-				hr() {
-					return '';
-				}
-
-				list() {
-					return '';
-				}
-
-				listitem() {
-					return '';
-				}
-
-				checkbox() {
-					return '';
-				}
-
-				paragraph(text: string) {
-					return `${text} `;
-				}
-
-				table() {
-					return '';
-				}
-
-				tablerow() {
-					return '';
-				}
-
-				tablecell() {
-					return '';
-				}
-
-				strong(text: string) {
-					return text;
-				}
-
-				em(text: string) {
-					return text;
-				}
-
-				codespan(text: string) {
-					return text;
-				}
-
-				br() {
-					return ' ';
-				}
-
-				del() {
-					return '';
-				}
-
-				link(href: string | null, title: string | null, text: string) {
-					return text;
-				}
-
-				image() {
-					return '';
-				}
-
-				text(text: string) {
-					return text;
-				}
-			})();
-
-			const htmlContent = await new Promise<string>((resolve, reject) =>
-				parse(
-					content,
-					{
-						renderer,
-						highlight: (code, lang) =>
-							hljs.highlight(
-								hljs.getLanguage(lang) ? lang : 'plaintext',
-								code
-							).value,
-					},
-					(err, parseResult) =>
-						err
-							? reject(err)
-							: resolve(
-									dompurify(
-										(new JSDOM()
-											.window as unknown) as Window
-									).sanitize(parseResult.trim())
-							  )
-				)
-			);
-			const plainContent = await new Promise<string>((resolve, reject) =>
-				parse(
-					content,
-					{
-						renderer: plainRenderer,
-					},
-					(err, parseResult) =>
-						err
-							? reject(err)
-							: resolve(parseResult.trim().replace(/\s+/g, ' '))
-				)
-			);
-
 			// Slice some beginning content and cutout a broken HTML entity if any.
-			const contentPreview = plainContent
+			const contentPreview = (await parseAsPlain(content))
 				.slice(0, 256)
 				.replace(/\s*&[^\s;]*$/, '');
 
 			await mgr.update(PostItem, post.id, {
 				content,
 				contentPreview,
-				htmlContent,
+				htmlContent: await parseAsHTMLWithImage(content, postImage),
 			});
 		});
 	}
