@@ -6,6 +6,7 @@ import {
 	ConflictException,
 	NotFoundException,
 } from '@nestjs/common';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { S3 } from 'aws-sdk';
 import { encode } from 'blurhash';
 import { Request } from 'express';
@@ -23,7 +24,11 @@ import { PostItem, PostItemAccessLevel } from '../db/entity/PostItem';
 import { PostItemImage } from '../db/entity/PostItemImage';
 
 import { asEnum, isEnum } from '../helper/Enum';
-import { parseAsPlain, parseAsHTMLWithImage } from '../helper/MDRenderer';
+import {
+	parseAsPlain,
+	parseAsHTMLWithImage,
+	parseAsText,
+} from '../helper/MDRenderer';
 import { SlugRegex } from '../helper/Regex';
 
 @Controller()
@@ -31,7 +36,11 @@ import { SlugRegex } from '../helper/Regex';
 export class AdminPostController {
 	private s3: S3;
 
-	constructor(private token: AuthTokenService, private conn: DBConnService) {
+	constructor(
+		private es: ElasticsearchService,
+		private token: AuthTokenService,
+		private conn: DBConnService
+	) {
 		this.s3 = new S3({
 			apiVersion: '2006-03-01',
 			accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
@@ -144,6 +153,11 @@ export class AdminPostController {
 
 			mgr.remove(post.images);
 			mgr.remove(post);
+
+			if (
+				(await this.es.exists({ id: slug, index: 'devlog-posts' })).body
+			)
+				await this.es.delete({ id: slug, index: 'devlog-posts' });
 		});
 	}
 
@@ -243,6 +257,68 @@ export class AdminPostController {
 					throw new ConflictException('slug already taken');
 
 				throw err;
+			}
+
+			let query = await mgr
+				.createQueryBuilder(PostItem, 'PostItem')
+				.where('PostItem.id = :id', { id: post.id })
+				.andWhere('PostItem.content IS NOT NULL')
+				.select([
+					'PostItem.accessLevel',
+					'PostItem.category',
+					'PostItem.title',
+				]);
+
+			if (newSlug)
+				query.select([
+					'PostItem.slug',
+					'PostItem.accessLevel',
+					'PostItem.category',
+					'PostItem.title',
+					'PostItem.content',
+					'PostItem.createdAt',
+				]);
+
+			const updatedPost = await query.getOne();
+
+			if (updatedPost) {
+				if (newSlug) {
+					if (
+						(
+							await this.es.exists({
+								id: slug,
+								index: 'devlog-posts',
+							})
+						).body
+					)
+						await this.es.delete({
+							id: slug,
+							index: 'devlog-posts',
+						});
+
+					await this.es.create({
+						id: updatedPost.slug,
+						index: 'devlog-posts',
+						body: {
+							accessLevel: updatedPost.accessLevel,
+							category: updatedPost.category || '',
+							title: updatedPost.title,
+							content: await parseAsText(updatedPost.content!),
+							createdAt: updatedPost.createdAt,
+						},
+					});
+				} else
+					await this.es.update({
+						id: updatedPost.slug,
+						index: 'devlog-posts',
+						body: {
+							doc: {
+								accessLevel: updatedPost.accessLevel,
+								category: updatedPost.category || '',
+								title: updatedPost.title,
+							},
+						},
+					});
 			}
 		});
 	}
@@ -548,6 +624,43 @@ export class AdminPostController {
 				contentPreview,
 				htmlContent: await parseAsHTMLWithImage(content, postImage),
 			});
+
+			if (
+				(await this.es.exists({ id: slug, index: 'devlog-posts' })).body
+			)
+				await this.es.update({
+					id: slug,
+					index: 'devlog-posts',
+					body: {
+						doc: {
+							content: await parseAsText(content),
+						},
+					},
+				});
+			else {
+				const updatedPost = await mgr
+					.createQueryBuilder(PostItem, 'PostItem')
+					.where('PostItem.id = :id', { id: post.id })
+					.select([
+						'PostItem.accessLevel',
+						'PostItem.category',
+						'PostItem.title',
+						'PostItem.createdAt',
+					])
+					.getOne();
+
+				await this.es.create({
+					id: slug,
+					index: 'devlog-posts',
+					body: {
+						accessLevel: updatedPost!.accessLevel,
+						category: updatedPost!.category || '',
+						title: updatedPost!.title,
+						content: await parseAsText(content),
+						createdAt: updatedPost!.createdAt,
+					},
+				});
+			}
 		});
 	}
 }
