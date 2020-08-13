@@ -1,5 +1,5 @@
 import { Controller, UseGuards, Req } from '@nestjs/common';
-import { Get, Post, Put, Delete, Patch } from '@nestjs/common';
+import { Post, Put, Delete, Patch } from '@nestjs/common';
 import { Param, Body } from '@nestjs/common';
 import {
 	BadRequestException,
@@ -12,7 +12,7 @@ import dompurify from 'dompurify';
 import { Request } from 'express';
 import hljs from 'highlight.js';
 import { JSDOM } from 'jsdom';
-import { Renderer, parse } from 'marked';
+import { parse, Renderer } from 'marked';
 import sharp from 'sharp';
 import { QueryFailedError } from 'typeorm';
 import validator from 'validator';
