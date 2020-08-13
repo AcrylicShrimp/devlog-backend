@@ -28,15 +28,63 @@ export class SchedulerModule {
 								properties: {
 									accessLevel: { type: 'keyword' },
 									category: { type: 'keyword' },
-									title: { type: 'text', analyzer: 'nori' },
-									content: { type: 'text', analyzer: 'nori' },
+									title: {
+										type: 'text',
+										fields: {
+											unicode: {
+												type: 'text',
+												analyzer: 'icu_analyzer',
+											},
+											english: {
+												type: 'text',
+												analyzer: 'english',
+											},
+											korean: {
+												type: 'text',
+												analyzer: 'nori',
+											},
+											japanese: {
+												type: 'text',
+												analyzer: 'kuromoji',
+											},
+											chinese: {
+												type: 'text',
+												analyzer: 'smartcn',
+											},
+										},
+									},
+									content: {
+										type: 'text',
+										fields: {
+											unicode: {
+												type: 'text',
+												analyzer: 'icu_analyzer',
+											},
+											english: {
+												type: 'text',
+												analyzer: 'english',
+											},
+											korean: {
+												type: 'text',
+												analyzer: 'nori',
+											},
+											japanese: {
+												type: 'text',
+												analyzer: 'kuromoji',
+											},
+											chinese: {
+												type: 'text',
+												analyzer: 'smartcn',
+											},
+										},
+									},
 									createdAt: { type: 'date' },
 								},
 							},
 						},
 					});
 
-				setInterval(this.syncWithES.bind(this), 1000 * 5);
+				setInterval(this.syncWithES.bind(this), 1000 * 60);
 			} catch (err) {
 				console.error(
 					`[scheduler] - [INIT] :: An error occurred: ${err}`
