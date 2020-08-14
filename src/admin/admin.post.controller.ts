@@ -263,20 +263,21 @@ export class AdminPostController {
 				.createQueryBuilder(PostItem, 'PostItem')
 				.where('PostItem.id = :id', { id: post.id })
 				.andWhere('PostItem.content IS NOT NULL')
+				.leftJoin('PostItem.category', 'Category')
 				.select([
 					'PostItem.accessLevel',
-					'PostItem.category',
 					'PostItem.title',
+					'Category.name',
 				]);
 
 			if (newSlug)
 				query.select([
 					'PostItem.slug',
 					'PostItem.accessLevel',
-					'PostItem.category',
 					'PostItem.title',
 					'PostItem.content',
 					'PostItem.createdAt',
+					'Category.name',
 				]);
 
 			const updatedPost = await query.getOne();
@@ -301,7 +302,7 @@ export class AdminPostController {
 						index: 'devlog-posts',
 						body: {
 							accessLevel: updatedPost.accessLevel,
-							category: updatedPost.category || '',
+							category: updatedPost.category?.name || '',
 							title: updatedPost.title,
 							content: await parseAsText(updatedPost.content!),
 							createdAt: updatedPost.createdAt,
@@ -314,7 +315,7 @@ export class AdminPostController {
 						body: {
 							doc: {
 								accessLevel: updatedPost.accessLevel,
-								category: updatedPost.category || '',
+								category: updatedPost.category?.name || '',
 								title: updatedPost.title,
 							},
 						},
@@ -641,11 +642,12 @@ export class AdminPostController {
 				const updatedPost = await mgr
 					.createQueryBuilder(PostItem, 'PostItem')
 					.where('PostItem.id = :id', { id: post.id })
+					.leftJoin('PostItem.category', 'Category')
 					.select([
 						'PostItem.accessLevel',
-						'PostItem.category',
 						'PostItem.title',
 						'PostItem.createdAt',
+						'Category.name',
 					])
 					.getOne();
 
@@ -654,7 +656,7 @@ export class AdminPostController {
 					index: 'devlog-posts',
 					body: {
 						accessLevel: updatedPost!.accessLevel,
-						category: updatedPost!.category || '',
+						category: updatedPost!.category?.name || '',
 						title: updatedPost!.title,
 						content: await parseAsText(content),
 						createdAt: updatedPost!.createdAt,

@@ -115,19 +115,20 @@ export class SchedulerModule {
 				)
 					break;
 
-				const post = await this.conn.conn.manager.findOne(
-					PostItem,
-					posts[index].id,
-					{
-						select: [
-							'accessLevel',
-							'category',
-							'title',
-							'content',
-							'createdAt',
-						],
-					}
-				);
+				const post = await this.conn.conn.manager
+					.createQueryBuilder(PostItem, 'PostItem')
+					.where('PostItem.id = :id', { id: posts[index].id })
+					.andWhere('PostItem.content IS NOT NULL')
+					.leftJoin('PostItem.category', 'Category')
+					.select([
+						'PostItem.accessLevel',
+						'PostItem.title',
+						'PostItem.content',
+						'PostItem.createdAt',
+						'Category.name',
+					])
+					.orderBy('PostItem.createdAt', 'DESC')
+					.getOne();
 
 				if (!post) continue;
 
@@ -137,7 +138,7 @@ export class SchedulerModule {
 						index: 'devlog-posts',
 						body: {
 							accessLevel: post.accessLevel,
-							category: post.category || '',
+							category: post.category?.name || '',
 							title: post.title,
 							content: await parseAsText(post.content!),
 							createdAt: post.createdAt,
