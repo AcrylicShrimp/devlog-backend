@@ -278,6 +278,7 @@ export class ViewPostController {
 				'PostItem.accessLevel',
 				'PostItem.title',
 				'PostItem.content',
+				'PostItem.contentPreview',
 				'PostItem.htmlContent',
 				'PostItem.createdAt',
 				'PostItem.modifiedAt',
