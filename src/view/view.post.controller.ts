@@ -2,6 +2,7 @@ import { Controller, UseGuards, Session } from '@nestjs/common';
 import { Get } from '@nestjs/common';
 import { Query, Param } from '@nestjs/common';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 import validator from 'validator';
 
 import { AdminNonBlockGuard } from '../admin/admin.nonblock.guard';
@@ -17,15 +18,24 @@ import { SlugRegex } from '../helper/Regex';
 @Controller()
 @UseGuards(AdminNonBlockGuard)
 export class ViewPostController {
-	constructor(private conn: DBConnService) {}
+	constructor(
+		private es: ElasticsearchService,
+		private conn: DBConnService
+	) {}
 
 	@Get('posts')
 	async listPosts(
 		@Session() session: AdminSession,
+		@Query('query') query: string,
 		@Query('category') category: string,
 		@Query('before') before: string,
 		@Query('after') after: string
 	): Promise<{ posts: PostItem[]; hasBefore: boolean; hasAfter: boolean }> {
+		if (query !== undefined) {
+			if (!query || !(query = query.trim()))
+				throw new BadRequestException('invalid query');
+		}
+
 		if (category !== undefined) {
 			if (!category || !(category = category.trim()))
 				throw new BadRequestException('invalid category');
@@ -50,8 +60,88 @@ export class ViewPostController {
 				throw new BadRequestException('bad after');
 		}
 
+		if (query && (category || before || after))
+			throw new BadRequestException('query cannot coexist with others');
+
 		if (before && after)
 			throw new BadRequestException('before and after cannot coexist');
+
+		if (query !== undefined)
+			return await this.conn.conn.transaction(async (mgr) => {
+				let booleanQuery = {
+					must: {
+						multi_match: {
+							query,
+							fields: [
+								'title',
+								'title.unicode',
+								'title.english',
+								'title.korean',
+								'title.japanese',
+								'title.chinese',
+								'content',
+								'content.unicode',
+								'content.english',
+								'content.korean',
+								'content.japanese',
+								'content.chinese',
+							],
+						},
+					},
+				};
+
+				if (!session)
+					booleanQuery = Object.assign(booleanQuery, {
+						filter: { term: { accessLevel: 'public' } },
+					});
+
+				const result = await this.es.search({
+					index: 'devlog-posts',
+					from: 0,
+					size: 10000,
+					_source: 'false',
+					body: {
+						query: {
+							bool: booleanQuery,
+						},
+					},
+				});
+
+				const posts = (
+					await Promise.all<PostItem | undefined>(
+						result.body.hits.hits.map(
+							(hit: {
+								_id: string;
+							}): Promise<PostItem | undefined> =>
+								mgr
+									.createQueryBuilder(PostItem, 'PostItem')
+									.where('PostItem.slug = :slug', {
+										slug: hit._id,
+									})
+									.andWhere('PostItem.content IS NOT NULL')
+									.leftJoin('PostItem.category', 'Category')
+									.select([
+										'PostItem.slug',
+										'PostItem.accessLevel',
+										'PostItem.title',
+										'PostItem.contentPreview',
+										'PostItem.createdAt',
+										'PostItem.modifiedAt',
+										'Category.name',
+									])
+									.getOne()
+						)
+					)
+				).filter((post): post is PostItem => !!post);
+
+				console.log(posts);
+
+				return {
+					posts,
+					hasBefore: false,
+					hasAfter: false,
+				};
+			});
 
 		return await this.conn.conn.transaction(async (mgr) => {
 			let categoryEntity: Category | undefined = undefined;

@@ -1,18 +1,15 @@
 import { Controller, UseGuards, Req } from '@nestjs/common';
-import { Get, Post, Put, Delete, Patch } from '@nestjs/common';
+import { Post, Put, Delete, Patch } from '@nestjs/common';
 import { Param, Body } from '@nestjs/common';
 import {
 	BadRequestException,
 	ConflictException,
 	NotFoundException,
 } from '@nestjs/common';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { S3 } from 'aws-sdk';
 import { encode } from 'blurhash';
-import dompurify from 'dompurify';
 import { Request } from 'express';
-import hljs from 'highlight.js';
-import { JSDOM } from 'jsdom';
-import { Renderer, parse } from 'marked';
 import sharp from 'sharp';
 import { QueryFailedError } from 'typeorm';
 import validator from 'validator';
@@ -27,6 +24,11 @@ import { PostItem, PostItemAccessLevel } from '../db/entity/PostItem';
 import { PostItemImage } from '../db/entity/PostItemImage';
 
 import { asEnum, isEnum } from '../helper/Enum';
+import {
+	parseAsPlain,
+	parseAsHTMLWithImage,
+	parseAsText,
+} from '../helper/MDRenderer';
 import { SlugRegex } from '../helper/Regex';
 
 @Controller()
@@ -34,7 +36,11 @@ import { SlugRegex } from '../helper/Regex';
 export class AdminPostController {
 	private s3: S3;
 
-	constructor(private token: AuthTokenService, private conn: DBConnService) {
+	constructor(
+		private es: ElasticsearchService,
+		private token: AuthTokenService,
+		private conn: DBConnService
+	) {
 		this.s3 = new S3({
 			apiVersion: '2006-03-01',
 			accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
@@ -147,6 +153,11 @@ export class AdminPostController {
 
 			mgr.remove(post.images);
 			mgr.remove(post);
+
+			if (
+				(await this.es.exists({ id: slug, index: 'devlog-posts' })).body
+			)
+				await this.es.delete({ id: slug, index: 'devlog-posts' });
 		});
 	}
 
@@ -246,6 +257,69 @@ export class AdminPostController {
 					throw new ConflictException('slug already taken');
 
 				throw err;
+			}
+
+			let query = await mgr
+				.createQueryBuilder(PostItem, 'PostItem')
+				.where('PostItem.id = :id', { id: post.id })
+				.andWhere('PostItem.content IS NOT NULL')
+				.leftJoin('PostItem.category', 'Category')
+				.select([
+					'PostItem.accessLevel',
+					'PostItem.title',
+					'Category.name',
+				]);
+
+			if (newSlug)
+				query.select([
+					'PostItem.slug',
+					'PostItem.accessLevel',
+					'PostItem.title',
+					'PostItem.content',
+					'PostItem.createdAt',
+					'Category.name',
+				]);
+
+			const updatedPost = await query.getOne();
+
+			if (updatedPost) {
+				if (newSlug) {
+					if (
+						(
+							await this.es.exists({
+								id: slug,
+								index: 'devlog-posts',
+							})
+						).body
+					)
+						await this.es.delete({
+							id: slug,
+							index: 'devlog-posts',
+						});
+
+					await this.es.create({
+						id: updatedPost.slug,
+						index: 'devlog-posts',
+						body: {
+							accessLevel: updatedPost.accessLevel,
+							category: updatedPost.category?.name || '',
+							title: updatedPost.title,
+							content: await parseAsText(updatedPost.content!),
+							createdAt: updatedPost.createdAt,
+						},
+					});
+				} else
+					await this.es.update({
+						id: updatedPost.slug,
+						index: 'devlog-posts',
+						body: {
+							doc: {
+								accessLevel: updatedPost.accessLevel,
+								category: updatedPost.category?.name || '',
+								title: updatedPost.title,
+							},
+						},
+					});
 			}
 		});
 	}
@@ -541,149 +615,54 @@ export class AdminPostController {
 				(image) => (postImage[image.index] = image.url)
 			);
 
-			const renderer = new (class extends Renderer {
-				image(href: string | null, title: string | null, text: string) {
-					if (href) {
-						const match = href.match(/\$(\d+)$/i);
-
-						if (match) {
-							const index = parseInt(match[1]);
-
-							if (!isNaN(index) && index in postImage)
-								href = postImage[index];
-						}
-					}
-
-					return super.image(href, title, text);
-				}
-			})();
-			const plainRenderer = new (class extends Renderer {
-				code() {
-					return '';
-				}
-
-				blockquote() {
-					return '';
-				}
-
-				html() {
-					return '';
-				}
-
-				heading() {
-					return '';
-				}
-
-				hr() {
-					return '';
-				}
-
-				list() {
-					return '';
-				}
-
-				listitem() {
-					return '';
-				}
-
-				checkbox() {
-					return '';
-				}
-
-				paragraph(text: string) {
-					return `${text} `;
-				}
-
-				table() {
-					return '';
-				}
-
-				tablerow() {
-					return '';
-				}
-
-				tablecell() {
-					return '';
-				}
-
-				strong(text: string) {
-					return text;
-				}
-
-				em(text: string) {
-					return text;
-				}
-
-				codespan(text: string) {
-					return text;
-				}
-
-				br() {
-					return ' ';
-				}
-
-				del() {
-					return '';
-				}
-
-				link(href: string | null, title: string | null, text: string) {
-					return text;
-				}
-
-				image() {
-					return '';
-				}
-
-				text(text: string) {
-					return text;
-				}
-			})();
-
-			const htmlContent = await new Promise<string>((resolve, reject) =>
-				parse(
-					content,
-					{
-						renderer,
-						highlight: (code, lang) =>
-							hljs.highlight(
-								hljs.getLanguage(lang) ? lang : 'plaintext',
-								code
-							).value,
-					},
-					(err, parseResult) =>
-						err
-							? reject(err)
-							: resolve(
-									dompurify(
-										(new JSDOM()
-											.window as unknown) as Window
-									).sanitize(parseResult.trim())
-							  )
-				)
-			);
-			const plainContent = await new Promise<string>((resolve, reject) =>
-				parse(
-					content,
-					{
-						renderer: plainRenderer,
-					},
-					(err, parseResult) =>
-						err
-							? reject(err)
-							: resolve(parseResult.trim().replace(/\s+/g, ' '))
-				)
-			);
-
 			// Slice some beginning content and cutout a broken HTML entity if any.
-			const contentPreview = plainContent
+			const contentPreview = (await parseAsPlain(content))
 				.slice(0, 256)
 				.replace(/\s*&[^\s;]*$/, '');
 
 			await mgr.update(PostItem, post.id, {
 				content,
 				contentPreview,
-				htmlContent,
+				htmlContent: await parseAsHTMLWithImage(content, postImage),
 			});
+
+			if (
+				(await this.es.exists({ id: slug, index: 'devlog-posts' })).body
+			)
+				await this.es.update({
+					id: slug,
+					index: 'devlog-posts',
+					body: {
+						doc: {
+							content: await parseAsText(content),
+						},
+					},
+				});
+			else {
+				const updatedPost = await mgr
+					.createQueryBuilder(PostItem, 'PostItem')
+					.where('PostItem.id = :id', { id: post.id })
+					.leftJoin('PostItem.category', 'Category')
+					.select([
+						'PostItem.accessLevel',
+						'PostItem.title',
+						'PostItem.createdAt',
+						'Category.name',
+					])
+					.getOne();
+
+				await this.es.create({
+					id: slug,
+					index: 'devlog-posts',
+					body: {
+						accessLevel: updatedPost!.accessLevel,
+						category: updatedPost!.category?.name || '',
+						title: updatedPost!.title,
+						content: await parseAsText(content),
+						createdAt: updatedPost!.createdAt,
+					},
+				});
+			}
 		});
 	}
 }

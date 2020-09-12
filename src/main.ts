@@ -1,5 +1,7 @@
 import dotenv from 'dotenv';
 
+if (process.env.NODE_ENV !== 'production') dotenv.config();
+
 import { NestFactory } from '@nestjs/core';
 
 import busboy from 'connect-busboy';
@@ -9,8 +11,6 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 (async () => {
-	dotenv.config();
-
 	const app = await NestFactory.create(AppModule);
 
 	app.use(helmet());
