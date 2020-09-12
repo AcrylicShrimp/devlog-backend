@@ -39,7 +39,6 @@ export class PostItem {
 	title!: string;
 
 	@Column({ type: 'mediumtext', nullable: true })
-	@Index()
 	content?: string;
 
 	@Column({ length: 256, nullable: true })
