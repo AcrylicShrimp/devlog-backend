@@ -36,7 +36,10 @@ export class ViewSitemapController {
 						})
 						.select(['PostItem.modifiedAt'])
 						.orderBy('PostItem.modifiedAt')
-						.offset(index)
+						.offset(
+							index + 49999 < count ? index + 49999 : count - 1
+						)
+						.limit(1)
 						.getOne()
 				);
 
