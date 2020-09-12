@@ -3,6 +3,7 @@ import { ElasticsearchModule } from '@nestjs/elasticsearch';
 
 import { ViewPostController } from './view.post.controller';
 import { ViewCategoryController } from './view.category.controller';
+import { ViewSitemapController } from './view.sitemap.controller';
 
 @Module({
 	imports: [
@@ -10,6 +11,10 @@ import { ViewCategoryController } from './view.category.controller';
 			node: `http://${process.env.ELASTICSEARCH_NODE_HOST}:${process.env.ELASTICSEARCH_NODE_PORT}`,
 		}),
 	],
-	controllers: [ViewCategoryController, ViewPostController],
+	controllers: [
+		ViewCategoryController,
+		ViewPostController,
+		ViewSitemapController,
+	],
 })
 export class ViewModule {}
