@@ -39,6 +39,7 @@ export class PostItem {
 	title!: string;
 
 	@Column({ type: 'mediumtext', nullable: true })
+	@Index()
 	content?: string;
 
 	@Column({ length: 256, nullable: true })
@@ -58,5 +59,6 @@ export class PostItem {
 	createdAt!: Date;
 
 	@UpdateDateColumn()
+	@Index()
 	modifiedAt!: Date;
 }
