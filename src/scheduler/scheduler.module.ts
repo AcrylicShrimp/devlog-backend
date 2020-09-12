@@ -102,8 +102,6 @@ export class SchedulerModule {
 				.orderBy('PostItem.createdAt', 'DESC')
 				.getMany();
 
-			console.log(posts);
-
 			for (let index = 0; index < posts.length; ++index) {
 				if (
 					(
@@ -132,19 +130,17 @@ export class SchedulerModule {
 
 				if (!post) continue;
 
-				console.log(
-					await this.es.create({
-						id: posts[index].slug,
-						index: 'devlog-posts',
-						body: {
-							accessLevel: post.accessLevel,
-							category: post.category?.name || '',
-							title: post.title,
-							content: await parseAsText(post.content!),
-							createdAt: post.createdAt,
-						},
-					})
-				);
+				await this.es.create({
+					id: posts[index].slug,
+					index: 'devlog-posts',
+					body: {
+						accessLevel: post.accessLevel,
+						category: post.category?.name || '',
+						title: post.title,
+						content: await parseAsText(post.content!),
+						createdAt: post.createdAt,
+					},
+				});
 			}
 		} catch (err) {
 			console.error(

@@ -134,8 +134,6 @@ export class ViewPostController {
 					)
 				).filter((post): post is PostItem => !!post);
 
-				console.log(posts);
-
 				return {
 					posts,
 					hasBefore: false,
