@@ -15,7 +15,7 @@ export class ViewSitemapController {
 	constructor(private conn: DBConnService) {}
 
 	@Get('sitemaps')
-	async generateSitemapIndex(@Res() res: Response): Promise<string> {
+	async generateSitemapIndex(@Res() res: Response): Promise<void> {
 		res.set('Content-Type', 'text/xml');
 		return this.conn.conn.transaction(async (mgr) => {
 			const count = await mgr.count(PostItem, {
@@ -40,15 +40,19 @@ export class ViewSitemapController {
 						.getOne()
 				);
 
-			return `<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${(
-				await Promise.all(queries)
-			)
-				.map((postItem, index) =>
-					postItem
-						? `<sitemap><loc>${process.env.SITEMAP_BASE_URL}sitemaps/${index}</loc><lastmod>${postItem.modifiedAt}</lastmod></sitemap>`
-						: ''
+			res.send(
+				`<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${(
+					await Promise.all(queries)
 				)
-				.join('')}</sitemapindex>`;
+					.map((postItem, index) =>
+						postItem
+							? `<sitemap><loc>${
+									process.env.SITEMAP_BASE_URL
+							  }sitemaps/${index}</loc><lastmod>${postItem.modifiedAt.toISOString()}</lastmod></sitemap>`
+							: ''
+					)
+					.join('')}</sitemapindex>`
+			);
 		});
 	}
 
@@ -56,30 +60,32 @@ export class ViewSitemapController {
 	async generateSitemap(
 		@Param('page', ParseIntPipe) page: number,
 		@Res() res: Response
-	): Promise<string> {
+	): Promise<void> {
 		if (page < 0)
 			throw new BadRequestException(
 				'page must be greater than or equal to zero'
 			);
 
-		res.set('Content-Type', 'text/xml');
-
-		return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${(
-			await this.conn.conn.manager.find(PostItem, {
-				where: {
-					accessLevel: PostItemAccessLevel.PUBLIC,
-					content: Not(IsNull()),
-				},
-				select: ['slug', 'modifiedAt'],
-				order: { modifiedAt: 'ASC' },
-				skip: page * 50000,
-			})
-		)
-			.map((postItem) =>
-				postItem
-					? `<url><loc>${process.env.POST_BASE_URL}${postItem.slug}</loc><lastmod>${postItem.modifiedAt}</lastmod></url>`
-					: ''
+		res.set('Content-Type', 'text/xml').send(
+			`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${(
+				await this.conn.conn.manager.find(PostItem, {
+					where: {
+						accessLevel: PostItemAccessLevel.PUBLIC,
+						content: Not(IsNull()),
+					},
+					select: ['slug', 'modifiedAt'],
+					order: { modifiedAt: 'ASC' },
+					skip: page * 50000,
+				})
 			)
-			.join('')}</urlset>`;
+				.map((postItem) =>
+					postItem
+						? `<url><loc>${process.env.POST_BASE_URL}${
+								postItem.slug
+						  }</loc><lastmod>${postItem.modifiedAt.toISOString()}</lastmod></url>`
+						: ''
+				)
+				.join('')}</urlset>`
+		);
 	}
 }
