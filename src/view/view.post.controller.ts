@@ -207,7 +207,7 @@ export class ViewPostController {
 					accessLevel: PostItemAccessLevel.PUBLIC,
 				});
 
-			let unlimitedQuery = query
+			const unlimitedQuery = query
 				.clone()
 				.select(['PostItem.id'])
 				.orderBy('PostItem.createdAt', 'DESC');
@@ -267,7 +267,7 @@ export class ViewPostController {
 	async getPost(
 		@Session() session: AdminSession,
 		@Param('slug') slug: string
-	) {
+	): Promise<PostItem> {
 		if (!slug || !(slug = slug.trim()))
 			throw new BadRequestException('slug required');
 
