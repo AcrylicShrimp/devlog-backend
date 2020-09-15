@@ -227,6 +227,9 @@ export class ViewPostController {
 						name: post.category,
 					};
 
+				post.createdAt = new Date(post.createdAt);
+				post.modifiedAt = new Date(post.modifiedAt);
+
 				return post;
 			});
 
