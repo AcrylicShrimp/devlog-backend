@@ -79,6 +79,7 @@ export class ViewSitemapController {
 					select: ['slug', 'modifiedAt'],
 					order: { modifiedAt: 'ASC' },
 					skip: page * 50000,
+					take: 50000,
 				})
 			)
 				.map((postItem) =>
