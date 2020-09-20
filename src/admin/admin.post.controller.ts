@@ -260,7 +260,7 @@ export class AdminPostController {
 				throw err;
 			}
 
-			let query = await mgr
+			const query = await mgr
 				.createQueryBuilder(PostItem, 'PostItem')
 				.where('PostItem.id = :id', { id: post.id })
 				.andWhere('PostItem.content IS NOT NULL')
