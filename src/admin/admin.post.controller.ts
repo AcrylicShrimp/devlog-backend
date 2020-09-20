@@ -169,7 +169,7 @@ export class AdminPostController {
 		@Body('new-access-level') newAccessLevel?: string,
 		@Body('new-category') newCategory?: string,
 		@Body('new-title') newTitle?: string
-	) {
+	): Promise<void> {
 		if (!slug || !(slug = slug.trim()))
 			throw new BadRequestException('slug required');
 
@@ -568,7 +568,7 @@ export class AdminPostController {
 	async putPostContent(
 		@Param('slug') slug: string,
 		@Body('content') content: string
-	) {
+	): Promise<void> {
 		if (!slug || !(slug = slug.trim()))
 			throw new BadRequestException('slug required');
 
