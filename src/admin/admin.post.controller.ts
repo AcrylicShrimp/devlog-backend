@@ -503,11 +503,9 @@ export class AdminPostController {
 							Delete: {
 								Objects: processedImages
 									.slice(index, index + 1000)
-									.map((processedImage) => {
-										return {
+									.map((processedImage) => ({
 											Key: `${post.uuid}/${processedImage.id}`,
-										};
-									}),
+									})),
 							},
 						})
 						.promise()
