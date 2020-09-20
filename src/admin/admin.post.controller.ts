@@ -737,6 +737,43 @@ export class AdminPostController {
 		});
 	}
 
+	@Delete('admin/posts/:slug/thumbnail')
+	async deletePostThumbnail(@Param('slug') slug: string): Promise<void> {
+		if (!slug || !(slug = slug.trim()))
+			throw new BadRequestException('slug required');
+
+		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
+
+		await this.conn.conn.transaction(async (mgr) => {
+			const post = await mgr
+				.createQueryBuilder(PostItem, 'PostItem')
+				.where('PostItem.slug = :slug', { slug })
+				.leftJoin('PostItem.thumbnail', 'PostItemThumbnail')
+				.select([
+					'PostItem.id',
+					'PostItem.uuid',
+					'PostItemThumbnail.id',
+				])
+				.getOne();
+
+			if (!post) throw new NotFoundException('post not exists');
+
+			await mgr.remove(post.thumbnail);
+
+			try {
+				await this.s3
+					.deleteObjects({
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						Bucket: process.env.AWS_S3_BUCKET_NAME!,
+						Delete: {
+							Objects: [{ Key: `${post.uuid}/__thumbnail` }],
+						},
+					})
+					.promise();
+			} catch {}
+		});
+	}
+
 	@Put('admin/posts/:slug/content')
 	async putPostContent(
 		@Param('slug') slug: string,
