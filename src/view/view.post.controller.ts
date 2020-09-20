@@ -316,6 +316,7 @@ export class ViewPostController {
 				'PostItem.content',
 				'PostItem.contentPreview',
 				'PostItem.htmlContent',
+				'PostItem.imageCount',
 				'PostItem.createdAt',
 				'PostItem.modifiedAt',
 				'PostItem.category',
