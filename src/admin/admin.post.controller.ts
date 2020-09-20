@@ -336,9 +336,6 @@ export class AdminPostController {
 		@Req() req: Request,
 		@Param('slug') slug: string
 	): Promise<number[]> {
-		if (!req.busboy)
-			throw new BadRequestException('only multipart/formdata allowed');
-
 		if (!slug || !(slug = slug.trim()))
 			throw new BadRequestException('slug required');
 
@@ -450,17 +447,17 @@ export class AdminPostController {
 
 			const uploads = processedImages.map(
 				(processedImage) =>
-						new S3.ManagedUpload({
-							service: this.s3,
-							params: {
-								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								Bucket: process.env.AWS_S3_BUCKET_NAME!,
-								Key: `${post.uuid}/${processedImage.id}`,
-								ACL: 'private',
-								Body: processedImage.image,
-								ContentType: 'image/webp',
-							},
-						})
+					new S3.ManagedUpload({
+						service: this.s3,
+						params: {
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							Bucket: process.env.AWS_S3_BUCKET_NAME!,
+							Key: `${post.uuid}/${processedImage.id}`,
+							ACL: 'private',
+							Body: processedImage.image,
+							ContentType: 'image/webp',
+						},
+					})
 			);
 
 			try {
@@ -504,7 +501,7 @@ export class AdminPostController {
 								Objects: processedImages
 									.slice(index, index + 1000)
 									.map((processedImage) => ({
-											Key: `${post.uuid}/${processedImage.id}`,
+										Key: `${post.uuid}/${processedImage.id}`,
 									})),
 							},
 						})
