@@ -44,8 +44,11 @@ export class AdminPostController {
 	) {
 		this.s3 = new S3({
 			apiVersion: '2006-03-01',
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			region: process.env.AWS_REGION!,
 		});
 	}
@@ -138,6 +141,7 @@ export class AdminPostController {
 				try {
 					await this.s3
 						.deleteObjects({
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							Bucket: process.env.AWS_S3_BUCKET_NAME!,
 							Delete: {
 								Objects: post.images
@@ -305,6 +309,7 @@ export class AdminPostController {
 							accessLevel: updatedPost.accessLevel,
 							category: updatedPost.category?.name || '',
 							title: updatedPost.title,
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							content: await parseAsText(updatedPost.content!),
 							createdAt: updatedPost.createdAt,
 						},
@@ -548,6 +553,7 @@ export class AdminPostController {
 			try {
 				await this.s3
 					.deleteObjects({
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						Bucket: process.env.AWS_S3_BUCKET_NAME!,
 						Delete: {
 							Objects: [
@@ -637,10 +643,14 @@ export class AdminPostController {
 					id: slug,
 					index: 'devlog-posts',
 					body: {
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						accessLevel: updatedPost!.accessLevel,
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						category: updatedPost!.category?.name || '',
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						title: updatedPost!.title,
 						content: await parseAsText(content),
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						createdAt: updatedPost!.createdAt,
 					},
 				});
