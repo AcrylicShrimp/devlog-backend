@@ -120,6 +120,10 @@ export class ViewPostController {
 									})
 									.andWhere('PostItem.content IS NOT NULL')
 									.leftJoin('PostItem.category', 'Category')
+									.leftJoin(
+										'PostItem.thumbnail',
+										'PostItemThumbnail'
+									)
 									.select([
 										'PostItem.slug',
 										'PostItem.accessLevel',
@@ -128,6 +132,10 @@ export class ViewPostController {
 										'PostItem.createdAt',
 										'PostItem.modifiedAt',
 										'Category.name',
+										'PostItemThumbnail.width',
+										'PostItemThumbnail.height',
+										'PostItemThumbnail.hash',
+										'PostItemThumbnail.url',
 									])
 									.getOne()
 						)
@@ -187,6 +195,7 @@ export class ViewPostController {
 			let query = mgr
 				.createQueryBuilder(PostItem, 'PostItem')
 				.leftJoin('PostItem.category', 'Category')
+				.leftJoin('PostItem.thumbnail', 'PostItemThumbnail')
 				.select('PostItem.slug', 'slug')
 				.addSelect('PostItem.accessLevel', 'accessLevel')
 				.addSelect('PostItem.title', 'title')
@@ -194,6 +203,10 @@ export class ViewPostController {
 				.addSelect('PostItem.createdAt', 'createdAt')
 				.addSelect('PostItem.modifiedAt', 'modifiedAt')
 				.addSelect('Category.name', 'category')
+				.addSelect('PostItemThumbnail.width', 'thumbnailWidth')
+				.addSelect('PostItemThumbnail.height', 'thumbnailHeight')
+				.addSelect('PostItemThumbnail.hash', 'thumbnailHash')
+				.addSelect('PostItemThumbnail.url', 'thumbnailUrl')
 				.where('PostItem.content IS NOT NULL');
 
 			if (categoryEntity)
@@ -229,6 +242,25 @@ export class ViewPostController {
 
 				post.createdAt = new Date(post.createdAt);
 				post.modifiedAt = new Date(post.modifiedAt);
+
+				if (
+					post.thumbnailWidth ||
+					post.thumbnailHeight ||
+					post.thumbnailHash ||
+					post.thumbnailUrl
+				)
+					post.thumbnail = {
+						width: post.thumbnailWidth,
+						height: post.thumbnailHeight,
+						hash: post.thumbnailHash,
+						url: post.thumbnailUrl,
+					};
+				else post.thumbnail = null;
+
+				post.thumbnailWidth = undefined;
+				post.thumbnailHeight = undefined;
+				post.thumbnailHash = undefined;
+				post.thumbnailUrl = undefined;
 
 				return post;
 			});
