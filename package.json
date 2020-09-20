@@ -43,6 +43,7 @@
 		"cross-env": "^7.0.2",
 		"dompurify": "^2.0.15",
 		"dotenv": "^8.2.0",
+		"formidable": "^2.0.0-canary.20200504.1",
 		"helmet": "^4.1.1",
 		"highlight.js": "^10.2.0",
 		"jsdom": "^16.4.0",
