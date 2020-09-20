@@ -7,6 +7,7 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
+import formidable from 'formidable';
 import { S3 } from 'aws-sdk';
 import { encode } from 'blurhash';
 import { Request } from 'express';
@@ -345,180 +346,138 @@ export class AdminPostController {
 
 			if (!post) throw new NotFoundException('post not exists');
 
-			interface ImageUpload {
-				upload: S3.ManagedUpload;
-				promise: Promise<void | S3.ManagedUpload.SendData>;
-			}
-			interface ImageMeta {
-				width: number;
-				height: number;
-				hash: string;
-			}
-
-			let error: any = undefined;
-			const imageIds: string[] = [];
-			const imageUploads: ImageUpload[] = [];
-			const imageMetas: Promise<void | ImageMeta>[] = [];
-
-			const abort = () => {
-				imageUploads.forEach((imageUpload) =>
-					imageUpload.upload.abort()
-				);
-
-				for (let index = 0; index < imageIds!.length; index += 1000)
-					this.s3
-						.deleteObjects({
-							Bucket: process.env.AWS_S3_BUCKET_NAME!,
-							Delete: {
-								Objects: imageIds!
-									.slice(index, index + 1000)
-									.map((imageId) => {
-										return {
-											Key: `${post.uuid}/${imageId}`,
-										};
-									}),
-							},
-						})
-						.promise()
-						.catch();
-			};
-
-			req.busboy.on('file', async (_, body, filename, encoding, mime) => {
-				if (error) {
-					body.resume();
-					return;
-				}
-
-				const imageId = await this.token.generateShort();
-				const image = body.pipe(sharp().rotate());
-
-				const upload = new S3.ManagedUpload({
-					service: this.s3,
-					params: {
-						Bucket: process.env.AWS_S3_BUCKET_NAME!,
-						Key: `${post.uuid}/${imageId}`,
-						ACL: 'private',
-						Body: image.clone().withMetadata(),
-						ContentType: mime,
-					},
-				});
-
-				imageIds.push(imageId);
-				imageUploads.push({
-					upload,
-					promise: upload.promise().catch((err) => {
-						if (error) return;
-
-						error = err;
-						abort();
-					}),
-				});
-				imageMetas.push(
-					(async () => {
-						try {
-							let hash = '';
-							const { width, height } = await image.metadata();
-
-							if (width && height) {
-								const maxDim = Math.max(width, height);
-								const minComponentCount = Math.round(
-									Math.min(width, height) /
-										Math.floor(maxDim / 5)
-								);
-
-								if (minComponentCount) {
-									const resizedImage = image.resize(
-										maxDim === width
-											? { width: 100 }
-											: { height: 100 }
-									);
-
-									let resizedWidth: number;
-									let resizedHeight: number;
-
-									if (maxDim === width) {
-										resizedWidth = 100;
-										resizedHeight = Math.round(
-											(100 / width) * height
-										);
-									} else {
-										resizedWidth = Math.round(
-											(100 / height) * width
-										);
-										resizedHeight = 100;
-									}
-
-									const componentX =
-										maxDim === width
-											? 5
-											: minComponentCount;
-									const componentY =
-										maxDim === width
-											? minComponentCount
-											: 5;
-
-									hash = encode(
-										Uint8ClampedArray.from(
-											await resizedImage
-												.ensureAlpha()
-												.toFormat('raw')
-												.toBuffer()
-										),
-										resizedWidth,
-										resizedHeight,
-										componentX,
-										componentY
-									);
-								}
-							}
-
-							return {
-								width: width || 0,
-								height: height || 0,
-								hash,
-							};
-						} catch (err) {
-							if (error) return;
-
-							error = err;
-							abort();
-						}
-					})()
-				);
-			});
-
-			await new Promise((resolve) =>
-				req.pipe(req.busboy).once('finish', () => resolve())
+			const files = await new Promise<formidable.Files>(
+				(resolve, reject) =>
+					new formidable.IncomingForm({
+						multiples: true,
+					}).parse(req, (err, _, files) =>
+						err ? reject(err) : resolve(files)
+					)
 			);
 
-			const results = await Promise.all([
-				Promise.all(imageUploads.map((upload) => upload.promise)),
-				Promise.all(imageMetas),
-			]);
+			if (!files['images']) return [];
 
-			if (error) throw error;
+			const images = Array.isArray(files['images'])
+				? files['images']
+				: [files['images']];
+
+			const processedImages = await Promise.all(
+				images.map(async (image) => {
+					const imageId = await this.token.generateShort();
+					const imageTransform = sharp(image.path, {
+						pages: -1,
+					}).rotate();
+
+					const { width, height } = await imageTransform.metadata();
+
+					const imageTransformForUpload = imageTransform
+						.clone()
+						.webp({ lossless: true })
+						.withMetadata();
+
+					if (!width || !height)
+						return {
+							id: imageId,
+							image: imageTransformForUpload,
+							width: 0,
+							height: 0,
+							hash: '',
+						};
+
+					const maxDim = Math.max(width, height);
+					const minComponentCount = Math.round(
+						Math.min(width, height) / Math.floor(maxDim / 5)
+					);
+
+					if (minComponentCount) {
+						let resizedWidth: number;
+						let resizedHeight: number;
+
+						if (maxDim === width) {
+							resizedWidth = 100;
+							resizedHeight = Math.round((100 / width) * height);
+						} else {
+							resizedWidth = Math.round((100 / height) * width);
+							resizedHeight = 100;
+						}
+
+						const componentX =
+							maxDim === width ? 5 : minComponentCount;
+						const componentY =
+							maxDim === width ? minComponentCount : 5;
+
+						return {
+							id: imageId,
+							image: imageTransformForUpload,
+							width,
+							height,
+							hash: encode(
+								Uint8ClampedArray.from(
+									await imageTransform
+										.clone()
+										.resize(
+											maxDim === width
+												? { width: 100 }
+												: { height: 100 }
+										)
+										.ensureAlpha()
+										.toFormat('raw')
+										.toBuffer()
+								),
+								resizedWidth,
+								resizedHeight,
+								componentX,
+								componentY
+							),
+						};
+					}
+
+					return {
+						id: imageId,
+						image: imageTransformForUpload,
+						width,
+						height,
+						hash: '',
+					};
+				})
+			);
+
+			const uploads = await Promise.all(
+				processedImages.map(
+					async (processedImage) =>
+						new S3.ManagedUpload({
+							service: this.s3,
+							params: {
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								Bucket: process.env.AWS_S3_BUCKET_NAME!,
+								Key: `${post.uuid}/${processedImage.id}`,
+								ACL: 'private',
+								Body: processedImage.image,
+								ContentType: 'image/webp',
+							},
+						})
+				)
+			);
 
 			try {
+				const uploadResults = await Promise.all(
+					uploads.map((upload) => upload.promise())
+				);
+
 				await mgr.update(PostItem, post.id, {
-					imageCount: post.imageCount + imageIds.length,
+					imageCount: post.imageCount + processedImages.length,
 				});
 
 				const images = await Promise.all(
-					imageIds.map((imageId, index) => {
+					processedImages.map((processedImage, index) => {
 						const postImage = new PostItemImage();
-						postImage.uuid = imageId;
+						postImage.uuid = processedImage.id;
 						postImage.index = post.imageCount + index;
-						postImage.width = (<ImageMeta[]>results[1])[
-							index
-						].width;
-						postImage.height = (<ImageMeta[]>results[1])[
-							index
-						].height;
-						postImage.hash = (<ImageMeta[]>results[1])[index].hash;
-						postImage.url = (<S3.ManagedUpload.SendData[]>(
-							results[0]
-						))[index].Location;
-						postImage.post = post;
+						postImage.width = processedImage.width;
+						postImage.height = processedImage.height;
+						postImage.hash = processedImage.hash;
+						(postImage.url = uploadResults[index].Location),
+							(postImage.post = post);
 
 						return mgr.save(postImage);
 					})
@@ -526,7 +485,30 @@ export class AdminPostController {
 
 				return images.map((image) => image.index);
 			} catch (err) {
-				abort();
+				uploads.forEach((upload) => upload.abort());
+
+				for (
+					let index = 0;
+					index < processedImages.length;
+					index += 1000
+				)
+					this.s3
+						.deleteObjects({
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							Bucket: process.env.AWS_S3_BUCKET_NAME!,
+							Delete: {
+								Objects: processedImages
+									.slice(index, index + 1000)
+									.map((processedImage) => {
+										return {
+											Key: `${post.uuid}/${processedImage.id}`,
+										};
+									}),
+							},
+						})
+						.promise()
+						.catch();
+
 				throw err;
 			}
 		});
