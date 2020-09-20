@@ -309,6 +309,7 @@ export class ViewPostController {
 			.createQueryBuilder(PostItem, 'PostItem')
 			.leftJoin('PostItem.category', 'Category')
 			.leftJoin('PostItem.images', 'PostItemImage')
+			.leftJoin('PostItem.thumbnail', 'PostItemThumbnail')
 			.select([
 				'PostItem.accessLevel',
 				'PostItem.title',
@@ -325,6 +326,10 @@ export class ViewPostController {
 				'PostItemImage.hash',
 				'PostItemImage.url',
 				'PostItemImage.createdAt',
+				'PostItemThumbnail.width',
+				'PostItemThumbnail.height',
+				'PostItemThumbnail.hash',
+				'PostItemThumbnail.url',
 			])
 			.where('PostItem.content IS NOT NULL');
 
