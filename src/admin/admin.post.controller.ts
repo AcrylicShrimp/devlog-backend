@@ -23,6 +23,7 @@ import { DBConnService } from '../db/db.conn.service';
 import { Category } from '../db/entity/Category';
 import { PostItem, PostItemAccessLevel } from '../db/entity/PostItem';
 import { PostItemImage } from '../db/entity/PostItemImage';
+import { PostItemThumbnail } from '../db/entity/PostItemThumbnail';
 
 import { asEnum, isEnum } from '../helper/Enum';
 import {
@@ -567,6 +568,172 @@ export class AdminPostController {
 			} catch {}
 
 			await mgr.remove(image);
+		});
+	}
+
+	@Put('admin/posts/:slug/thumbnail')
+	async putPostThumbnail(
+		@Req() req: Request,
+		@Param('slug') slug: string
+	): Promise<void> {
+		if (!slug || !(slug = slug.trim()))
+			throw new BadRequestException('slug required');
+
+		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
+
+		await this.conn.conn.transaction(async (mgr) => {
+			const post = await mgr
+				.createQueryBuilder(PostItem, 'PostItem')
+				.where('PostItem.slug = :slug', { slug })
+				.leftJoin('PostItem.thumbnail', 'PostItemThumbnail')
+				.select([
+					'PostItem.id',
+					'PostItem.uuid',
+					'PostItemThumbnail.id',
+				])
+				.getOne();
+
+			if (!post) throw new NotFoundException('post not exists');
+
+			const files = await new Promise<formidable.Files>(
+				(resolve, reject) =>
+					new formidable.IncomingForm().parse(req, (err, _, files) =>
+						err ? reject(err) : resolve(files)
+					)
+			);
+
+			if (!files['image']) return;
+
+			const image = Array.isArray(files['images'])
+				? files['images'][0]
+				: files['images'];
+
+			const processedImage = await (async () => {
+				const imageTransform = sharp(image.path, {
+					pages: 1,
+				}).rotate();
+
+				const { width, height } = await imageTransform.metadata();
+
+				const imageTransformForUpload = imageTransform
+					.clone()
+					.webp({ quality: 100 })
+					.withMetadata();
+
+				if (!width || !height)
+					return {
+						image: imageTransformForUpload,
+						width: 0,
+						height: 0,
+						hash: '',
+					};
+
+				const maxDim = Math.max(width, height);
+				const minComponentCount = Math.round(
+					Math.min(width, height) / Math.floor(maxDim / 5)
+				);
+
+				const [resizedImageWidth, resizedImageHeight] =
+					width < height
+						? [Math.ceil((1024 * width) / height), 1024]
+						: [1024, Math.ceil((1024 * height) / width)];
+
+				const resizedImageTransformForUpload = imageTransformForUpload.resize(
+					resizedImageWidth,
+					resizedImageHeight
+				);
+
+				if (minComponentCount) {
+					let resizedWidth: number;
+					let resizedHeight: number;
+
+					if (maxDim === width) {
+						resizedWidth = 100;
+						resizedHeight = Math.round((100 / width) * height);
+					} else {
+						resizedWidth = Math.round((100 / height) * width);
+						resizedHeight = 100;
+					}
+
+					const componentX = maxDim === width ? 5 : minComponentCount;
+					const componentY = maxDim === width ? minComponentCount : 5;
+
+					return {
+						image: resizedImageTransformForUpload,
+						width,
+						height,
+						hash: encode(
+							Uint8ClampedArray.from(
+								await imageTransform
+									.clone()
+									.resize(
+										maxDim === width
+											? { width: 100 }
+											: { height: 100 }
+									)
+									.ensureAlpha()
+									.toFormat('raw')
+									.toBuffer()
+							),
+							resizedWidth,
+							resizedHeight,
+							componentX,
+							componentY
+						),
+					};
+				}
+
+				return {
+					image: resizedImageTransformForUpload,
+					width,
+					height,
+					hash: '',
+				};
+			})();
+
+			const upload = new S3.ManagedUpload({
+				service: this.s3,
+				params: {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					Bucket: process.env.AWS_S3_BUCKET_NAME!,
+					Key: `${post.uuid}/__thumbnail`,
+					ACL: 'private',
+					Body: processedImage.image,
+					ContentType: 'image/webp',
+				},
+			});
+
+			try {
+				const uploadResult = await upload.promise();
+
+				await mgr.remove(post.thumbnail);
+
+				const postThumbnail = new PostItemThumbnail();
+				postThumbnail.width = processedImage.width;
+				postThumbnail.height = processedImage.height;
+				postThumbnail.hash = processedImage.hash;
+				postThumbnail.url = uploadResult.Location;
+				mgr.save(postThumbnail);
+
+				await mgr.update(PostItem, post.id, {
+					thumbnail: postThumbnail,
+				});
+			} catch (err) {
+				upload.abort();
+
+				await this.s3
+					.deleteObjects({
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						Bucket: process.env.AWS_S3_BUCKET_NAME!,
+						Delete: {
+							Objects: [{ Key: `${post.uuid}/__thumbnail` }],
+						},
+					})
+					.promise()
+					.catch();
+
+				throw err;
+			}
 		});
 	}
 
