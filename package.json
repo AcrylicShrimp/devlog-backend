@@ -9,7 +9,7 @@
 		"typeorm:prd": "typeorm",
 		"cli:create-admin:dev": "ts-node ./src/cli/create-admin",
 		"cli:create-admin:prd": "node ./dist/cli/create-admin",
-		"run:dev": "cross-env NODE_ENV=development nest start --debug --watch",
+		"run:dev": "cross-env NODE_ENV=development TYPEORM_ENTITIES=build/db/entity/**/*.js TYPEORM_MIGRATIONS=build/db/migration/**/*.js TYPEORM_SUBSCRIBERS=build/db/subscriber/**/*.js nest start --debug --watch",
 		"run:prd": "cross-env NODE_ENV=production node dist/main"
 	},
 	"repository": {
