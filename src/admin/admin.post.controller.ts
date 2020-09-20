@@ -448,9 +448,8 @@ export class AdminPostController {
 				})
 			);
 
-			const uploads = await Promise.all(
-				processedImages.map(
-					async (processedImage) =>
+			const uploads = processedImages.map(
+				(processedImage) =>
 						new S3.ManagedUpload({
 							service: this.s3,
 							params: {
@@ -462,7 +461,6 @@ export class AdminPostController {
 								ContentType: 'image/webp',
 							},
 						})
-				)
 			);
 
 			try {
