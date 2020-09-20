@@ -597,9 +597,9 @@ export class AdminPostController {
 
 			if (!files['image']) return;
 
-			const image = Array.isArray(files['images'])
-				? files['images'][0]
-				: files['images'];
+			const image = Array.isArray(files['image'])
+				? files['image'][0]
+				: files['image'];
 
 			const processedImage = await (async () => {
 				const imageTransform = sharp(image.path, {
@@ -627,7 +627,9 @@ export class AdminPostController {
 				);
 
 				const [resizedImageWidth, resizedImageHeight] =
-					width < height
+					width <= 1024 && height <= 1024
+						? [width, height]
+						: width < height
 						? [Math.ceil((1024 * width) / height), 1024]
 						: [1024, Math.ceil((1024 * height) / width)];
 
@@ -653,8 +655,8 @@ export class AdminPostController {
 
 					return {
 						image: resizedImageTransformForUpload,
-						width,
-						height,
+						width: resizedImageWidth,
+						height: resizedImageHeight,
 						hash: encode(
 							Uint8ClampedArray.from(
 								await imageTransform
@@ -678,8 +680,8 @@ export class AdminPostController {
 
 				return {
 					image: resizedImageTransformForUpload,
-					width,
-					height,
+					width: resizedImageWidth,
+					height: resizedImageHeight,
 					hash: '',
 				};
 			})();
@@ -699,14 +701,14 @@ export class AdminPostController {
 			try {
 				const uploadResult = await upload.promise();
 
-				await mgr.remove(post.thumbnail);
+				if (post.thumbnail) await mgr.remove(post.thumbnail);
 
 				const postThumbnail = new PostItemThumbnail();
 				postThumbnail.width = processedImage.width;
 				postThumbnail.height = processedImage.height;
 				postThumbnail.hash = processedImage.hash;
 				postThumbnail.url = uploadResult.Location;
-				mgr.save(postThumbnail);
+				await mgr.save(postThumbnail);
 
 				await mgr.update(PostItem, post.id, {
 					thumbnail: postThumbnail,
@@ -751,7 +753,7 @@ export class AdminPostController {
 
 			if (!post) throw new NotFoundException('post not exists');
 
-			await mgr.remove(post.thumbnail);
+			if (post.thumbnail) await mgr.remove(post.thumbnail);
 
 			try {
 				await this.s3
