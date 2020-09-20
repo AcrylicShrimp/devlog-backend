@@ -7,10 +7,13 @@ import {
 	ManyToOne,
 	OneToMany,
 	Index,
+	OneToOne,
+	JoinColumn,
 } from 'typeorm';
 
 import { Category } from './Category';
 import { PostItemImage } from './PostItemImage';
+import { PostItemThumbnail } from './PostItemThumbnail';
 
 export enum PostItemAccessLevel {
 	PUBLIC = 'public',
@@ -52,6 +55,10 @@ export class PostItem {
 
 	@Column({ default: 0 })
 	imageCount!: number; // Accumulates total uploaded image count.
+
+	@OneToOne(() => PostItemThumbnail)
+	@JoinColumn()
+	thumbnail!: PostItemThumbnail;
 
 	@CreateDateColumn()
 	@Index()
