@@ -4,7 +4,6 @@ if (process.env.NODE_ENV !== 'production') dotenv.config();
 
 import { NestFactory } from '@nestjs/core';
 
-import busboy from 'connect-busboy';
 import cors from 'cors';
 import helmet from 'helmet';
 
@@ -21,7 +20,6 @@ import { AppModule } from './app.module';
 			methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
 		})
 	);
-	app.use(busboy());
 
 	await app.listen(8000, '0.0.0.0');
 })();
