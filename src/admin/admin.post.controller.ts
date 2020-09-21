@@ -11,6 +11,7 @@ import formidable from 'formidable';
 import { S3 } from 'aws-sdk';
 import { encode } from 'blurhash';
 import { Request } from 'express';
+import * as fs from 'fs';
 import sharp from 'sharp';
 import { QueryFailedError } from 'typeorm';
 import validator from 'validator';
@@ -387,21 +388,19 @@ export class AdminPostController {
 			const processedImages = await Promise.all(
 				images.map(async (image) => {
 					const imageId = await this.token.generateShort();
-					const imageTransform = sharp(image.path, {
-						pages: -1,
-					}).rotate();
+					const imageTransformForUpload = fs.createReadStream(
+						image.path
+					);
 
-					const { width, height } = await imageTransform.metadata();
-
-					const imageTransformForUpload = imageTransform
-						.clone()
-						.webp({ lossless: true })
-						.withMetadata();
+					const { width, height } = await sharp(
+						image.path
+					).metadata();
 
 					if (!width || !height)
 						return {
 							id: imageId,
 							image: imageTransformForUpload,
+							type: image.type,
 							width: 0,
 							height: 0,
 							hash: '',
@@ -432,12 +431,12 @@ export class AdminPostController {
 						return {
 							id: imageId,
 							image: imageTransformForUpload,
+							type: image.type,
 							width,
 							height,
 							hash: encode(
 								Uint8ClampedArray.from(
-									await imageTransform
-										.clone()
+									await sharp(image.path)
 										.resize(
 											maxDim === width
 												? { width: 100 }
@@ -458,6 +457,7 @@ export class AdminPostController {
 					return {
 						id: imageId,
 						image: imageTransformForUpload,
+						type: image.type,
 						width,
 						height,
 						hash: '',
@@ -475,7 +475,7 @@ export class AdminPostController {
 							Key: `${post.uuid}/${processedImage.id}`,
 							ACL: 'private',
 							Body: processedImage.image,
-							ContentType: 'image/webp',
+							ContentType: processedImage.type,
 						},
 					})
 			);
