@@ -127,16 +127,35 @@ export class AdminPostController {
 			const post = await mgr
 				.createQueryBuilder(PostItem, 'PostItem')
 				.leftJoin('PostItem.images', 'PostItemImage')
+				.leftJoin('PostItem.thumbnail', 'PostItemThumbnail')
 				.where('PostItem.slug = :slug', { slug })
 				.select([
 					'PostItem.id',
 					'PostItem.uuid',
 					'PostItemImage.id',
 					'PostItemImage.uuid',
+					'PostItemThumbnail.id',
 				])
 				.getOne();
 
 			if (!post) throw new NotFoundException('no post found');
+
+			if (post.thumbnail)
+				try {
+					await this.s3
+						.deleteObjects({
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							Bucket: process.env.AWS_S3_BUCKET_NAME!,
+							Delete: {
+								Objects: [
+									{
+										Key: `${post.uuid}/__thumbnail`,
+									},
+								],
+							},
+						})
+						.promise();
+				} catch {}
 
 			for (let index = 0; index < post.images.length; index += 1000)
 				try {
@@ -157,6 +176,7 @@ export class AdminPostController {
 						.promise();
 				} catch {}
 
+			if (post.thumbnail) mgr.remove(post.thumbnail);
 			mgr.remove(post.images);
 			mgr.remove(post);
 
