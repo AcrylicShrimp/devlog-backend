@@ -14,12 +14,16 @@ import { Request } from 'express';
 import * as fs from 'fs';
 import sharp from 'sharp';
 import { QueryFailedError } from 'typeorm';
-import validator from 'validator';
 
 import { AdminGuard } from './admin.guard';
 
 import { AuthTokenService } from '../auth/auth.token.service';
 import { DBConnService } from '../db/db.conn.service';
+
+import { OptionalPipe } from '../helper/OptionalPipe';
+import { PositiveIntegerPipe } from '../helper/PositiveIntegerPipe';
+import { SlugPipe } from '../helper/SlugPipe';
+import { StringPipe } from '../helper/StringPipe';
 
 import { Category } from '../db/entity/Category';
 import { PostItem, PostItemAccessLevel } from '../db/entity/PostItem';
@@ -32,7 +36,6 @@ import {
 	parseAsHTMLWithImage,
 	parseAsText,
 } from '../helper/MDRenderer';
-import { SlugRegex } from '../helper/Regex';
 
 @Controller()
 @UseGuards(AdminGuard)
@@ -57,34 +60,17 @@ export class AdminPostController {
 
 	@Post('admin/posts')
 	async newPost(
-		@Body('slug') slug: string,
+		@Body('slug', new StringPipe(256), SlugPipe) slug: string,
 		@Body('access-level') accessLevel: string,
-		@Body('category') category: string,
-		@Body('title') title: string
+		@Body('category', new OptionalPipe(new StringPipe(32)))
+		category: string | undefined,
+		@Body('title', new StringPipe(128)) title: string
 	): Promise<void> {
-		if (!slug || !(slug = slug.trim()))
-			throw new BadRequestException('slug required');
-
-		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
-
 		if (!accessLevel || !(accessLevel = accessLevel.trim()))
 			throw new BadRequestException('access-level required');
 
 		if (!isEnum(PostItemAccessLevel, accessLevel))
 			throw new BadRequestException('bad access-level');
-
-		if (category !== undefined) {
-			category = (category ?? '').trim();
-
-			if (category && !validator.isLength(category, { max: 32 }))
-				throw new BadRequestException('category too long');
-		}
-
-		if (!title || !(title = title.trim()))
-			throw new BadRequestException('title required');
-
-		if (!validator.isLength(title, { max: 128 }))
-			throw new BadRequestException('title too long');
 
 		await this.conn.conn.transaction(async (mgr) => {
 			let categoryEntity: Category | undefined = undefined;
@@ -118,12 +104,9 @@ export class AdminPostController {
 	}
 
 	@Delete('admin/posts/:slug')
-	async deletePost(@Param('slug') slug: string): Promise<void> {
-		if (!slug || !(slug = slug.trim()))
-			throw new BadRequestException('slug required');
-
-		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
-
+	async deletePost(
+		@Param('slug', new StringPipe(256), SlugPipe) slug: string
+	): Promise<void> {
 		await this.conn.conn.transaction(async (mgr) => {
 			const post = await mgr
 				.createQueryBuilder(PostItem, 'PostItem')
@@ -190,25 +173,15 @@ export class AdminPostController {
 
 	@Patch('admin/posts/:slug')
 	async updatePost(
-		@Param('slug') slug: string,
-		@Body('new-slug') newSlug?: string,
-		@Body('new-access-level') newAccessLevel?: string,
-		@Body('new-category') newCategory?: string,
-		@Body('new-title') newTitle?: string
+		@Param('slug', new StringPipe(256), SlugPipe) slug: string,
+		@Body('new-slug', new OptionalPipe(new StringPipe(256), new SlugPipe()))
+		newSlug: string | undefined,
+		@Body('new-access-level') newAccessLevel: string | undefined,
+		@Body('new-category', new OptionalPipe(new StringPipe(32)))
+		newCategory: string | undefined,
+		@Body('new-title', new OptionalPipe(new StringPipe(128)))
+		newTitle: string | undefined
 	): Promise<void> {
-		if (!slug || !(slug = slug.trim()))
-			throw new BadRequestException('slug required');
-
-		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
-
-		if (newSlug !== undefined) {
-			if (!newSlug || !(newSlug = newSlug.trim()))
-				throw new BadRequestException('invalid new-slug');
-
-			if (!SlugRegex.test(newSlug))
-				throw new BadRequestException('bad new-slug');
-		}
-
 		if (newAccessLevel !== undefined) {
 			if (!newAccessLevel || !(newAccessLevel = newAccessLevel.trim()))
 				throw new BadRequestException('invalid new-access-level');
@@ -217,23 +190,13 @@ export class AdminPostController {
 				throw new BadRequestException('bad new-access-level');
 		}
 
-		if (newCategory !== undefined) {
-			newCategory = (newCategory ?? '').trim();
-
-			if (newCategory && !validator.isLength(newCategory, { max: 32 }))
-				throw new BadRequestException('new-category too long');
-		}
-
-		if (newTitle !== undefined) {
-			if (!newTitle || !(newTitle = newTitle.trim()))
-				throw new BadRequestException('new-title required');
-
-			if (!validator.isLength(newTitle, { max: 128 }))
-				throw new BadRequestException('new-title too long');
-		}
-
-		if (!newSlug && !newAccessLevel && newCategory == null && !newTitle)
-			throw new BadRequestException('no changes');
+		if (
+			newSlug === undefined &&
+			newAccessLevel === undefined &&
+			newCategory === undefined &&
+			newTitle === undefined
+		)
+			throw new BadRequestException('nothing to patch');
 
 		await this.conn.conn.transaction(async (mgr) => {
 			const post = await mgr.findOne(PostItem, {
@@ -355,13 +318,8 @@ export class AdminPostController {
 	@Post('admin/posts/:slug/images')
 	async newPostImage(
 		@Req() req: Request,
-		@Param('slug') slug: string
+		@Param('slug', new StringPipe(256), SlugPipe) slug: string
 	): Promise<number[]> {
-		if (!slug || !(slug = slug.trim()))
-			throw new BadRequestException('slug required');
-
-		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
-
 		return await this.conn.conn.transaction(async (mgr) => {
 			const post = await mgr.findOne(PostItem, {
 				where: { slug },
@@ -535,20 +493,9 @@ export class AdminPostController {
 
 	@Delete('admin/posts/:slug/images/:index')
 	async deletePostImage(
-		@Param('slug') slug: string,
-		@Param('index') index: string
+		@Param('slug', new StringPipe(256), SlugPipe) slug: string,
+		@Param('index', PositiveIntegerPipe) index: string
 	): Promise<void> {
-		if (!slug || !(slug = slug.trim()))
-			throw new BadRequestException('slug required');
-
-		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
-
-		if (!index || !(index = index.trim()))
-			throw new BadRequestException('index required');
-
-		if (!validator.isNumeric(index))
-			throw new BadRequestException('index must be a integer');
-
 		await this.conn.conn.transaction(async (mgr) => {
 			const post = await mgr.findOne(PostItem, {
 				where: { slug },
@@ -558,7 +505,7 @@ export class AdminPostController {
 			if (!post) throw new NotFoundException('post not exists');
 
 			const image = await mgr.findOne(PostItemImage, {
-				where: { post, index: parseInt(index) },
+				where: { post, index },
 				select: ['id', 'uuid'],
 			});
 
@@ -587,13 +534,8 @@ export class AdminPostController {
 	@Put('admin/posts/:slug/thumbnail')
 	async putPostThumbnail(
 		@Req() req: Request,
-		@Param('slug') slug: string
+		@Param('slug', new StringPipe(256), SlugPipe) slug: string
 	): Promise<void> {
-		if (!slug || !(slug = slug.trim()))
-			throw new BadRequestException('slug required');
-
-		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
-
 		await this.conn.conn.transaction(async (mgr) => {
 			const post = await mgr
 				.createQueryBuilder(PostItem, 'PostItem')
@@ -753,12 +695,9 @@ export class AdminPostController {
 	}
 
 	@Delete('admin/posts/:slug/thumbnail')
-	async deletePostThumbnail(@Param('slug') slug: string): Promise<void> {
-		if (!slug || !(slug = slug.trim()))
-			throw new BadRequestException('slug required');
-
-		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
-
+	async deletePostThumbnail(
+		@Param('slug', new StringPipe(256), SlugPipe) slug: string
+	): Promise<void> {
 		await this.conn.conn.transaction(async (mgr) => {
 			const post = await mgr
 				.createQueryBuilder(PostItem, 'PostItem')
@@ -791,17 +730,9 @@ export class AdminPostController {
 
 	@Put('admin/posts/:slug/content')
 	async putPostContent(
-		@Param('slug') slug: string,
-		@Body('content') content: string
+		@Param('slug', new StringPipe(256), SlugPipe) slug: string,
+		@Body('content', new StringPipe(16777216)) content: string
 	): Promise<void> {
-		if (!slug || !(slug = slug.trim()))
-			throw new BadRequestException('slug required');
-
-		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
-
-		if (!content || !(content = content.trim()))
-			throw new BadRequestException('content required');
-
 		await this.conn.conn.transaction(async (mgr) => {
 			const post = await mgr
 				.createQueryBuilder(PostItem, 'PostItem')

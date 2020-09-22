@@ -1,12 +1,12 @@
 import { Controller } from '@nestjs/common';
 import { Get } from '@nestjs/common';
-import { ParseIntPipe } from '@nestjs/common';
 import { Param, Res } from '@nestjs/common';
-import { BadRequestException } from '@nestjs/common';
 import { Response } from 'express';
 import { IsNull, Not } from 'typeorm';
 
 import { DBConnService } from '../db/db.conn.service';
+
+import { PositiveIntegerPipe } from '../helper/PositiveIntegerPipe';
 
 import { PostItem, PostItemAccessLevel } from '../db/entity/PostItem';
 
@@ -61,14 +61,9 @@ export class ViewSitemapController {
 
 	@Get('sitemaps/:page')
 	async generateSitemap(
-		@Param('page', ParseIntPipe) page: number,
+		@Param('page', PositiveIntegerPipe) page: number,
 		@Res() res: Response
 	): Promise<void> {
-		if (page < 0)
-			throw new BadRequestException(
-				'page must be greater than or equal to zero'
-			);
-
 		res.set('Content-Type', 'text/xml').send(
 			`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${(
 				await this.conn.conn.manager.find(PostItem, {

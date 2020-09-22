@@ -3,17 +3,18 @@ import { Get } from '@nestjs/common';
 import { Query, Param } from '@nestjs/common';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import validator from 'validator';
 
 import { AdminNonBlockGuard } from '../admin/admin.nonblock.guard';
 
 import { DBConnService } from '../db/db.conn.service';
 
+import { OptionalPipe } from '../helper/OptionalPipe';
+import { SlugPipe } from '../helper/SlugPipe';
+import { StringPipe } from '../helper/StringPipe';
+
 import { AdminSession } from '../db/entity/AdminSession';
 import { Category } from '../db/entity/Category';
 import { PostItem, PostItemAccessLevel } from '../db/entity/PostItem';
-
-import { SlugRegex } from '../helper/Regex';
 
 @Controller()
 @UseGuards(AdminNonBlockGuard)
@@ -26,44 +27,24 @@ export class ViewPostController {
 	@Get('posts')
 	async listPosts(
 		@Session() session: AdminSession,
-		@Query('query') query: string,
-		@Query('category') category: string,
-		@Query('before') before: string,
-		@Query('after') after: string
+		@Query('query', new OptionalPipe(new StringPipe()))
+		query: string | undefined,
+		@Query('category', new OptionalPipe(new StringPipe(32)))
+		category: string | undefined,
+		@Query('before', new OptionalPipe(new StringPipe(256), new SlugPipe()))
+		before: string | undefined,
+		@Query('after', new OptionalPipe(new StringPipe(256), new SlugPipe()))
+		after: string | undefined
 	): Promise<{ posts: PostItem[]; hasBefore: boolean; hasAfter: boolean }> {
-		if (query !== undefined) {
-			if (!query || !(query = query.trim()))
-				throw new BadRequestException('invalid query');
-		}
-
-		if (category !== undefined) {
-			if (!category || !(category = category.trim()))
-				throw new BadRequestException('invalid category');
-
-			if (!validator.isLength(category, { max: 32 }))
-				throw new BadRequestException('category too long');
-		}
-
-		if (before !== undefined) {
-			if (!before || !(before = before.trim()))
-				throw new BadRequestException('invalid before');
-
-			if (!SlugRegex.test(before))
-				throw new BadRequestException('bad before');
-		}
-
-		if (after !== undefined) {
-			if (!after || !(after = after.trim()))
-				throw new BadRequestException('invalid after');
-
-			if (!SlugRegex.test(after))
-				throw new BadRequestException('bad after');
-		}
-
-		if (query && (category || before || after))
+		if (
+			query !== undefined &&
+			(category !== undefined ||
+				before !== undefined ||
+				after !== undefined)
+		)
 			throw new BadRequestException('query cannot coexist with others');
 
-		if (before && after)
+		if (before !== undefined && after !== undefined)
 			throw new BadRequestException('before and after cannot coexist');
 
 		if (query !== undefined)
@@ -298,13 +279,8 @@ export class ViewPostController {
 	@Get('posts/:slug')
 	async getPost(
 		@Session() session: AdminSession,
-		@Param('slug') slug: string
+		@Param('slug', new StringPipe(256), SlugPipe) slug: string
 	): Promise<PostItem> {
-		if (!slug || !(slug = slug.trim()))
-			throw new BadRequestException('slug required');
-
-		if (!SlugRegex.test(slug)) throw new BadRequestException('bad slug');
-
 		let query = this.conn.conn.manager
 			.createQueryBuilder(PostItem, 'PostItem')
 			.leftJoin('PostItem.category', 'Category')
