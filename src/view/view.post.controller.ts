@@ -215,36 +215,7 @@ export class ViewPostController {
 
 			query = query.orderBy('PostItem.createdAt', after ? 'ASC' : 'DESC');
 
-			let posts = (await query.limit(20).getRawMany()).map((post) => {
-				if (post.category)
-					post.category = {
-						name: post.category,
-					};
-
-				post.createdAt = new Date(post.createdAt);
-				post.modifiedAt = new Date(post.modifiedAt);
-
-				if (
-					post.thumbnailWidth ||
-					post.thumbnailHeight ||
-					post.thumbnailHash ||
-					post.thumbnailUrl
-				)
-					post.thumbnail = {
-						width: post.thumbnailWidth,
-						height: post.thumbnailHeight,
-						hash: post.thumbnailHash,
-						url: post.thumbnailUrl,
-					};
-				else post.thumbnail = null;
-
-				post.thumbnailWidth = undefined;
-				post.thumbnailHeight = undefined;
-				post.thumbnailHash = undefined;
-				post.thumbnailUrl = undefined;
-
-				return post;
-			});
+			let posts = await query.limit(20).getRawMany();
 
 			if (after) posts = posts.reverse();
 
@@ -269,7 +240,36 @@ export class ViewPostController {
 							.getCount()) !== 0));
 
 			return {
-				posts,
+				posts: posts.map((post) => {
+					if (post.category)
+						post.category = {
+							name: post.category,
+						};
+
+					post.createdAt = new Date(post.createdAt);
+					post.modifiedAt = new Date(post.modifiedAt);
+
+					if (
+						post.thumbnailWidth ||
+						post.thumbnailHeight ||
+						post.thumbnailHash ||
+						post.thumbnailUrl
+					)
+						post.thumbnail = {
+							width: post.thumbnailWidth,
+							height: post.thumbnailHeight,
+							hash: post.thumbnailHash,
+							url: post.thumbnailUrl,
+						};
+					else post.thumbnail = null;
+
+					post.thumbnailWidth = undefined;
+					post.thumbnailHeight = undefined;
+					post.thumbnailHash = undefined;
+					post.thumbnailUrl = undefined;
+
+					return post;
+				}),
 				hasBefore,
 				hasAfter,
 			};
