@@ -1,5 +1,5 @@
 import { Controller, UseGuards } from '@nestjs/common';
-import { Get, Post, Delete, Patch } from '@nestjs/common';
+import { Post, Delete, Patch } from '@nestjs/common';
 import { Body, Param } from '@nestjs/common';
 import {
 	BadRequestException,
