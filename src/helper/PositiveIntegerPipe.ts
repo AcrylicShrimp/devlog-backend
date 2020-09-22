@@ -4,12 +4,7 @@ import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class PositiveIntegerPipe implements PipeTransform<unknown, number> {
-	transform(value: unknown, { data, metatype }: ArgumentMetadata): number {
-		if (metatype !== Number)
-			throw Error(
-				`${data} has wrong type; ${Number} expected, got ${metatype}`
-			);
-
+	transform(value: unknown, { data }: ArgumentMetadata): number {
 		if (value === undefined)
 			throw new BadRequestException(`${data} required`);
 

@@ -11,12 +11,7 @@ export class StringPipe implements PipeTransform<unknown, string> {
 		if (this.max < 1) this.max = 1;
 	}
 
-	transform(value: unknown, { data, metatype }: ArgumentMetadata): string {
-		if (metatype !== String)
-			throw Error(
-				`${data} has wrong type; ${String} expected, got ${metatype}`
-			);
-
+	transform(value: unknown, { data }: ArgumentMetadata): string {
 		if (value === undefined)
 			throw new BadRequestException(`${data} required`);
 
