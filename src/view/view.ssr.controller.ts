@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import { JSDOM } from 'jsdom';
 import * as path from 'path';
 
-import { DBConnService } from '../db/db.conn.service';
 import { OptionalPipe } from '../helper/OptionalPipe';
 import { StringPipe } from '../helper/StringPipe';
 
@@ -18,7 +17,7 @@ export class ViewSSRController {
 	private readonly attachments: string[];
 	private readonly timeout: number;
 
-	constructor(private conn: DBConnService) {
+	constructor() {
 		const frontendDir = process.env.SSR_FRONTEND_DIR || process.cwd();
 		this.frontendEvent = process.env.SSR_FRONTEND_EVENT || 'app-loaded';
 		this.indexHTML = fs.readFileSync(
