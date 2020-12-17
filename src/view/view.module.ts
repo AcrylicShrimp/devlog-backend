@@ -4,6 +4,7 @@ import { ElasticsearchModule } from '@nestjs/elasticsearch';
 import { ViewPostController } from './view.post.controller';
 import { ViewCategoryController } from './view.category.controller';
 import { ViewSitemapController } from './view.sitemap.controller';
+import { ViewSSRController } from './view.ssr.controller';
 
 @Module({
 	imports: [
@@ -15,6 +16,7 @@ import { ViewSitemapController } from './view.sitemap.controller';
 		ViewCategoryController,
 		ViewPostController,
 		ViewSitemapController,
+		ViewSSRController,
 	],
 })
 export class ViewModule {}
