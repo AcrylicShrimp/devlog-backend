@@ -7,10 +7,10 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import formidable from 'formidable';
 import { S3 } from 'aws-sdk';
 import { encode } from 'blurhash';
 import { Request } from 'express';
+import formidable from 'formidable';
 import * as fs from 'fs';
 import sharp from 'sharp';
 import { QueryFailedError } from 'typeorm';
@@ -455,8 +455,8 @@ export class AdminPostController {
 						postImage.width = processedImage.width;
 						postImage.height = processedImage.height;
 						postImage.hash = processedImage.hash;
-						(postImage.url = uploadResults[index].Location),
-							(postImage.post = post);
+						postImage.url = uploadResults[index].Location;
+						postImage.post = post;
 
 						return mgr.save(postImage);
 					})
