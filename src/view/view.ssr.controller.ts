@@ -37,6 +37,10 @@ export class ViewSSRController {
 
 	@Get('ssr/:path(*)?')
 	@Header('Content-Type', 'text/html')
+	@Header(
+		'Content-Security-Policy',
+		"default-src 'self' https:; script-src 'self'; style-src 'unsafe-inline' 'self' https:;"
+	)
 	async generateSSRPage(
 		@Param('path', new OptionalPipe(new StringPipe(Number.MAX_VALUE, true)))
 		path: string | undefined
