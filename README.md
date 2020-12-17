@@ -32,7 +32,7 @@ A minimal devlog service.
 | `ELASTICSEARCH_NODE_PORT`         | Port number of the elasticsearch node (maybe `9200`)                                                                  | Elasticsearch              |
 | `SITEMAP_BASE_URL`                | URL of the frontend index page for sitemaps (must be end with a slash e.g. `https://blog.ashrimp.dev/`)               | Sitemap                    |
 | `POST_BASE_URL`                   | URL of the frontend post page for sitemaps (must be end with a slash e.g. `https://blog.ashrimp.dev/posts/`)          | Sitemap                    |
-| `SSR_FRONTEND_URL`                | URL of the frontend post page for SSR (must be end with a slash e.g. `https://blog.ashrimp.dev/posts/`)               | SSR                        |
+| `SSR_FRONTEND_URL`                | URL of the frontend post page for SSR (must be end with a slash e.g. `https://blog.ashrimp.dev/`)                     | SSR                        |
 | `SSR_FRONTEND_DIR`                | Path to the frontend directory                                                                                        | SSR                        |
 | `SSR_FRONTEND_SCRIPTS`            | Comma-separated list of script file names that must be executed during SSR                                            | SSR                        |
 | `SSR_FRONTEND_SCRIPT_ATTACHMENTS` | Comma-separated list of script URLs that must be attached to the end of body after SSR (e.g. `/index.js`)             | SSR                        |
