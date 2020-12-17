@@ -36,7 +36,7 @@ export class ViewSSRController {
 		this.timeout = Number(process.env.SSR_FRONTEND_TIMEOUT || 5000);
 	}
 
-	@Get('ssr/:path?')
+	@Get('ssr/:path(*)')
 	@Header('Content-Type', 'text/html')
 	async generateSSRPage(
 		@Param('path', new OptionalPipe(new StringPipe()))
