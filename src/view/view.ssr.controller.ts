@@ -35,13 +35,13 @@ export class ViewSSRController {
 		this.timeout = Number(process.env.SSR_FRONTEND_TIMEOUT || 5000);
 	}
 
-	@Get('ssr/:path(*)')
+	@Get('ssr/:path(*)?')
 	@Header('Content-Type', 'text/html')
 	async generateSSRPage(
-		@Param('path', new OptionalPipe(new StringPipe()))
+		@Param('path', new OptionalPipe(new StringPipe(Number.MAX_VALUE, true)))
 		path: string | undefined
 	): Promise<string> {
-		path = path || '';
+		path = path ?? '';
 
 		return new Promise((resolve, reject) => {
 			const dom = new JSDOM(this.indexHTML, {
