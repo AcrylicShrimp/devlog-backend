@@ -75,6 +75,12 @@ export class ViewSSRController {
 				resolve(dom.serialize());
 			});
 
+			// Remove all pre-existing scripts.
+			const scripts = dom.window.document.getElementsByTagName('script');
+
+			for (let index = scripts.length - 1; 0 <= index; --index)
+				scripts[index].parentNode?.removeChild(scripts[index]);
+
 			try {
 				for (const script of this.scripts) dom.window.eval(script);
 			} catch (err) {
