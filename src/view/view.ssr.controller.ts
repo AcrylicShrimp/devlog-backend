@@ -80,7 +80,7 @@ export class ViewSSRController {
 					const script = dom.window.document.createElement('script');
 					script.src = attachment;
 					dom.window.document.body.appendChild(script);
-					this.logger.debug(`Script(=${script}) attached`);
+					this.logger.debug(`Script(=${attachment}) attached`);
 				}
 
 				resolve(dom.serialize());
@@ -93,10 +93,10 @@ export class ViewSSRController {
 			// Remove all pre-existing scripts.
 			const scripts = dom.window.document.getElementsByTagName('script');
 
+			this.logger.debug(`Script(=${scripts.length}) found, removing`);
+
 			for (let index = scripts.length - 1; 0 <= index; --index)
 				scripts[index].parentNode?.removeChild(scripts[index]);
-
-			this.logger.debug(`Script(=${scripts.length}) removed`);
 
 			try {
 				for (const script of this.scripts) {
