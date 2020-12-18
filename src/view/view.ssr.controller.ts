@@ -47,11 +47,17 @@ export class ViewSSRController {
 	): Promise<string> {
 		path = path ?? '';
 
+		this.logger.debug(`Begining page(=${path})`);
+
 		return new Promise((resolve, reject) => {
 			const dom = new JSDOM(this.indexHTML, {
 				runScripts: 'outside-only',
 				url: `${process.env.SSR_FRONTEND_URL}${path}`,
 			});
+
+			this.logger.debug(
+				`DOM created (url=${process.env.SSR_FRONTEND_URL}${path})`
+			);
 
 			// Poly-fill some window functions here.
 			dom.window.scrollTo = () => {};
@@ -63,17 +69,26 @@ export class ViewSSRController {
 				reject('timeout');
 			}, this.timeout);
 
+			this.logger.debug(`Timeout(=${this.timeout}ms) set`);
+
 			dom.window.addEventListener(this.frontendEvent, () => {
+				this.logger.debug(`Event(=${this.frontendEvent}) received`);
+
 				clearTimeout(timeout);
 
 				for (const attachment of this.attachments) {
 					const script = dom.window.document.createElement('script');
 					script.src = attachment;
 					dom.window.document.body.appendChild(script);
+					this.logger.debug(`Script(=${script}) attached`);
 				}
 
 				resolve(dom.serialize());
 			});
+
+			this.logger.debug(
+				`Event(=${this.frontendEvent}) listener attached`
+			);
 
 			// Remove all pre-existing scripts.
 			const scripts = dom.window.document.getElementsByTagName('script');
@@ -81,8 +96,15 @@ export class ViewSSRController {
 			for (let index = scripts.length - 1; 0 <= index; --index)
 				scripts[index].parentNode?.removeChild(scripts[index]);
 
+			this.logger.debug(`Script(=${scripts.length}) removed`);
+
 			try {
-				for (const script of this.scripts) dom.window.eval(script);
+				for (const script of this.scripts) {
+					dom.window.eval(script);
+					this.logger.debug(
+						`Script(=${script.length} characters) executed`
+					);
+				}
 			} catch (err) {
 				this.logger.warn(
 					`Unable to generate page(=${path}), an error(=${err}) occurred!`
