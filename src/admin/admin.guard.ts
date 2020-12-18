@@ -10,7 +10,7 @@ import validator from 'validator';
 import { DBConnService } from '../db/db.conn.service';
 import { AdminSession } from '../db/entity/AdminSession';
 
-const TOKEN_EXPIRY = 1000 * 60 * 30;
+const TOKEN_EXPIRY = 1000 * 60 * 60 * 5;
 
 @Injectable()
 export class AdminGuard implements CanActivate {
