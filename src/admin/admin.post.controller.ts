@@ -796,4 +796,89 @@ export class AdminPostController {
 			}
 		});
 	}
+
+	@Put('admin/posts/contents')
+	async updatePostContent(): Promise<void> {
+		await this.conn.conn.transaction(async (mgr) => {
+			const posts = await mgr
+				.createQueryBuilder(PostItem, 'PostItem')
+				.leftJoin('PostItem.images', 'PostItemImage')
+				.select([
+					'PostItem.id',
+					'PostItem.slug',
+					'PostItem.content',
+					'PostItemImage.index',
+					'PostItemImage.url',
+				])
+				.where('PostItem.content IS NOT NULL')
+				.getMany();
+
+			const results = await Promise.all(
+				posts.map((post) =>
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					this.post.generatePostContent(post, post.content!)
+				)
+			);
+
+			await Promise.all(
+				results.map((result, index) =>
+					mgr.update(PostItem, posts[index].id, {
+						contentPreview: result.contentPreview,
+						htmlContent: result.htmlContent,
+					})
+				)
+			);
+
+			await Promise.all(
+				posts.map(async (post, index) => {
+					if (
+						(
+							await this.es.exists({
+								id: post.slug,
+								index: 'devlog-posts',
+							})
+						).body
+					)
+						await this.es.update({
+							id: post.slug,
+							index: 'devlog-posts',
+							body: {
+								doc: {
+									content: results[index].contentText,
+								},
+							},
+						});
+					else {
+						const updatedPost = await mgr
+							.createQueryBuilder(PostItem, 'PostItem')
+							.where('PostItem.id = :id', { id: post.id })
+							.leftJoin('PostItem.category', 'Category')
+							.select([
+								'PostItem.accessLevel',
+								'PostItem.title',
+								'PostItem.createdAt',
+								'Category.name',
+							])
+							.getOne();
+
+						await this.es.create({
+							id: post.slug,
+							index: 'devlog-posts',
+							body: {
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								accessLevel: updatedPost!.accessLevel,
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								category: updatedPost!.category?.name || '',
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								title: updatedPost!.title,
+								content: results[index].contentText,
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								createdAt: updatedPost!.createdAt,
+							},
+						});
+					}
+				})
+			);
+		});
+	}
 }
