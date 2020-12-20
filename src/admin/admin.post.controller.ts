@@ -433,6 +433,14 @@ export class AdminPostController {
 							Body: processedImage.image,
 							ContentType: processedImage.type,
 						},
+						tags: [
+							{
+								Key: 'Cache-Control',
+								Value:
+									process.env.AWS_S3_CACHE_CONTROL ||
+									'max-age=86400',
+							},
+						],
 					})
 			);
 
@@ -656,6 +664,13 @@ export class AdminPostController {
 					Body: processedImage.image,
 					ContentType: 'image/webp',
 				},
+				tags: [
+					{
+						Key: 'Cache-Control',
+						Value:
+							process.env.AWS_S3_CACHE_CONTROL || 'max-age=86400',
+					},
+				],
 			});
 
 			try {
