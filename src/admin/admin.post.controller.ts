@@ -17,6 +17,7 @@ import { QueryFailedError } from 'typeorm';
 
 import { AdminGuard } from './admin.guard';
 
+import { AdminPostService } from './admin.post.service';
 import { AuthTokenService } from '../auth/auth.token.service';
 import { DBConnService } from '../db/db.conn.service';
 
@@ -31,11 +32,7 @@ import { PostItemImage } from '../db/entity/PostItemImage';
 import { PostItemThumbnail } from '../db/entity/PostItemThumbnail';
 
 import { asEnum, isEnum } from '../helper/Enum';
-import {
-	parseAsPlain,
-	parseAsHTMLWithImage,
-	parseAsText,
-} from '../helper/MDRenderer';
+import { parseAsText } from '../helper/MDRenderer';
 
 @Controller()
 @UseGuards(AdminGuard)
@@ -43,6 +40,7 @@ export class AdminPostController {
 	private s3: S3;
 
 	constructor(
+		private post: AdminPostService,
 		private es: ElasticsearchService,
 		private token: AuthTokenService,
 		private conn: DBConnService
@@ -747,21 +745,12 @@ export class AdminPostController {
 
 			if (!post) throw new NotFoundException('post not exists');
 
-			const postImage: { [key: number]: string } = {};
-
-			post.images.forEach(
-				(image) => (postImage[image.index] = image.url)
-			);
-
-			// Slice some beginning content and cutout a broken HTML entity if any.
-			const contentPreview = (await parseAsPlain(content))
-				.slice(0, 256)
-				.replace(/\s*&[^\s;]*$/, '');
+			const result = await this.post.generatePostContent(post, content);
 
 			await mgr.update(PostItem, post.id, {
 				content,
-				contentPreview,
-				htmlContent: await parseAsHTMLWithImage(content, postImage),
+				contentPreview: result.contentPreview,
+				htmlContent: result.htmlContent,
 			});
 
 			if (
@@ -772,7 +761,7 @@ export class AdminPostController {
 					index: 'devlog-posts',
 					body: {
 						doc: {
-							content: await parseAsText(content),
+							content: result.contentText,
 						},
 					},
 				});
@@ -799,7 +788,7 @@ export class AdminPostController {
 						category: updatedPost!.category?.name || '',
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						title: updatedPost!.title,
-						content: await parseAsText(content),
+						content: result.contentText,
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						createdAt: updatedPost!.createdAt,
 					},
