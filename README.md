@@ -13,6 +13,7 @@ A minimal devlog service.
 -   Minimal administration APIs
 -   Generates sitemaps automatically
 -   SSR
+-   CDN
 
 ## Environment variables
 
@@ -38,6 +39,7 @@ A minimal devlog service.
 | `SSR_FRONTEND_SCRIPT_ATTACHMENTS` | Comma-separated list of script URLs that must be attached to the end of body after SSR (e.g. `/index.js`)             | SSR                        |
 | `SSR_FRONTEND_EVENT`              | DOM event name that will be fired when the pages are ready to server for SSR (defaults to `app-loaded`)               | SSR                        |
 | `SSR_FRONTEND_TIMEOUT`            | Timeout of the SSR rendering in milisecond (defaults to `5000`)                                                       | SSR                        |
+| `CDN_BASE_URL`                    | URL of the CDN to serve images (must be end with a slash e.g. `https://cdn.blog.ashrimp.dev/`)                        | CDN                        |
 
 ## Access Level
 
