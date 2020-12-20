@@ -19,6 +19,8 @@ import { PostItem, PostItemAccessLevel } from '../db/entity/PostItem';
 @Controller()
 @UseGuards(AdminNonBlockGuard)
 export class ViewPostController {
+	private readonly urlRegex = /^https?:(?:\/\/)?\w(?:[\w-]+\w)?(?:\.\w(?:[\w-]+\w)?)*\//;
+
 	constructor(
 		private es: ElasticsearchService,
 		private conn: DBConnService
@@ -122,6 +124,16 @@ export class ViewPostController {
 						)
 					)
 				).filter((post): post is PostItem => !!post);
+
+				if (process.env.CDN_BASE_URL)
+					for (const post of posts) {
+						if (!post.thumbnail) continue;
+
+						post.thumbnail.url = post.thumbnail.url.replace(
+							this.urlRegex,
+							process.env.CDN_BASE_URL
+						);
+					}
 
 				return {
 					posts,
@@ -239,37 +251,49 @@ export class ViewPostController {
 							})
 							.getCount()) !== 0));
 
+			posts = posts.map((post) => {
+				if (post.category)
+					post.category = {
+						name: post.category,
+					};
+
+				post.createdAt = new Date(post.createdAt);
+				post.modifiedAt = new Date(post.modifiedAt);
+
+				if (
+					post.thumbnailWidth ||
+					post.thumbnailHeight ||
+					post.thumbnailHash ||
+					post.thumbnailUrl
+				) {
+					post.thumbnail = {
+						width: post.thumbnailWidth,
+						height: post.thumbnailHeight,
+						hash: post.thumbnailHash,
+						url: post.thumbnailUrl,
+					};
+				} else post.thumbnail = null;
+
+				post.thumbnailWidth = undefined;
+				post.thumbnailHeight = undefined;
+				post.thumbnailHash = undefined;
+				post.thumbnailUrl = undefined;
+
+				return post;
+			});
+
+			if (process.env.CDN_BASE_URL)
+				for (const post of posts) {
+					if (!post.thumbnail) continue;
+
+					post.thumbnail.url = post.thumbnail.url.replace(
+						this.urlRegex,
+						process.env.CDN_BASE_URL
+					);
+				}
+
 			return {
-				posts: posts.map((post) => {
-					if (post.category)
-						post.category = {
-							name: post.category,
-						};
-
-					post.createdAt = new Date(post.createdAt);
-					post.modifiedAt = new Date(post.modifiedAt);
-
-					if (
-						post.thumbnailWidth ||
-						post.thumbnailHeight ||
-						post.thumbnailHash ||
-						post.thumbnailUrl
-					)
-						post.thumbnail = {
-							width: post.thumbnailWidth,
-							height: post.thumbnailHeight,
-							hash: post.thumbnailHash,
-							url: post.thumbnailUrl,
-						};
-					else post.thumbnail = null;
-
-					post.thumbnailWidth = undefined;
-					post.thumbnailHeight = undefined;
-					post.thumbnailHash = undefined;
-					post.thumbnailUrl = undefined;
-
-					return post;
-				}),
+				posts,
 				hasBefore,
 				hasAfter,
 			};
@@ -322,6 +346,20 @@ export class ViewPostController {
 			.getOne();
 
 		if (!post) throw new NotFoundException('no post found');
+
+		if (process.env.CDN_BASE_URL) {
+			if (post.thumbnail)
+				post.thumbnail.url = post.thumbnail.url.replace(
+					this.urlRegex,
+					process.env.CDN_BASE_URL
+				);
+
+			for (const image of post.images)
+				image.url = image.url.replace(
+					this.urlRegex,
+					process.env.CDN_BASE_URL
+				);
+		}
 
 		return post;
 	}
