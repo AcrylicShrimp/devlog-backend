@@ -1,6 +1,6 @@
 {
 	"name": "devlog-backend",
-	"version": "1.8.5",
+	"version": "1.9.0",
 	"description": "A minimal devlog service.",
 	"main": "dist/main",
 	"scripts": {
