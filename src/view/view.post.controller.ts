@@ -19,7 +19,7 @@ import { PostItem, PostItemAccessLevel } from '../db/entity/PostItem';
 @Controller()
 @UseGuards(AdminNonBlockGuard)
 export class ViewPostController {
-	private readonly urlRegex = /^https?:(?:\/\/)?\w(?:[\w-]+\w)?(?:\.\w(?:[\w-]+\w)?)*\//;
+	private readonly urlRegex = /^https?:(?:\/\/)?(?:\w[\w-]+\w|\w{1,2})(?:\.(?:\w[\w-]+\w|\w{1,2}))*\//;
 
 	constructor(
 		private es: ElasticsearchService,
