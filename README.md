@@ -17,29 +17,30 @@ A minimal devlog service.
 
 ## Environment variables
 
-| Variable                          | Description                                                                                                           | Related functionality      |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| `AWS_ACCESS_KEY_ID`               | AWS Access key ID                                                                                                     | Post images and thumbnails |
-| `AWS_SECRET_ACCESS_KEY`           | AWS Secret key                                                                                                        | Post images and thumbnails |
-| `AWS_REGION`                      | AWS region                                                                                                            | Post images and thumbnails |
-| `AWS_S3_BUCKET_NAME`              | AWS S3 bucket name                                                                                                    | Post images and thumbnails |
-| `TYPEORM_CONNECTION`              | [Typeorm setting](https://github.com/typeorm/typeorm/blob/master/docs/using-ormconfig.md#using-environment-variables) | Database                   |
-| `TYPEORM_HOST`                    | [Typeorm setting](https://github.com/typeorm/typeorm/blob/master/docs/using-ormconfig.md#using-environment-variables) | Database                   |
-| `TYPEORM_PORT`                    | [Typeorm setting](https://github.com/typeorm/typeorm/blob/master/docs/using-ormconfig.md#using-environment-variables) | Database                   |
-| `TYPEORM_USERNAME`                | [Typeorm setting](https://github.com/typeorm/typeorm/blob/master/docs/using-ormconfig.md#using-environment-variables) | Database                   |
-| `TYPEORM_PASSWORD`                | [Typeorm setting](https://github.com/typeorm/typeorm/blob/master/docs/using-ormconfig.md#using-environment-variables) | Database                   |
-| `TYPEORM_DATABASE`                | [Typeorm setting](https://github.com/typeorm/typeorm/blob/master/docs/using-ormconfig.md#using-environment-variables) | Database                   |
-| `ELASTICSEARCH_NODE_HOST`         | Hostname of the elasticsearch node (maybe `127.0.0.1`)                                                                | Elasticsearch              |
-| `ELASTICSEARCH_NODE_PORT`         | Port number of the elasticsearch node (maybe `9200`)                                                                  | Elasticsearch              |
-| `SITEMAP_BASE_URL`                | URL of the frontend index page for sitemaps (must be end with a slash e.g. `https://blog.ashrimp.dev/`)               | Sitemap                    |
-| `POST_BASE_URL`                   | URL of the frontend post page for sitemaps (must be end with a slash e.g. `https://blog.ashrimp.dev/posts/`)          | Sitemap                    |
-| `SSR_FRONTEND_URL`                | URL of the frontend post page for SSR (must be end with a slash e.g. `https://blog.ashrimp.dev/`)                     | SSR                        |
-| `SSR_FRONTEND_DIR`                | Path to the frontend directory                                                                                        | SSR                        |
-| `SSR_FRONTEND_SCRIPTS`            | Comma-separated list of script file names that must be executed during SSR                                            | SSR                        |
-| `SSR_FRONTEND_SCRIPT_ATTACHMENTS` | Comma-separated list of script URLs that must be attached to the end of body after SSR (e.g. `/index.js`)             | SSR                        |
-| `SSR_FRONTEND_EVENT`              | DOM event name that will be fired when the pages are ready to server for SSR (defaults to `app-loaded`)               | SSR                        |
-| `SSR_FRONTEND_TIMEOUT`            | Timeout of the SSR rendering in milisecond (defaults to `5000`)                                                       | SSR                        |
-| `CDN_BASE_URL`                    | URL of the CDN to serve images (must be end with a slash e.g. `https://cdn.blog.ashrimp.dev/`)                        | CDN                        |
+| Variable                          | Description                                                                                                                                                                          | Related functionality      |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------- |
+| `AWS_ACCESS_KEY_ID`               | AWS Access key ID                                                                                                                                                                    | Post images and thumbnails |
+| `AWS_SECRET_ACCESS_KEY`           | AWS Secret key                                                                                                                                                                       | Post images and thumbnails |
+| `AWS_REGION`                      | AWS region                                                                                                                                                                           | Post images and thumbnails |
+| `AWS_S3_BUCKET_NAME`              | AWS S3 bucket name                                                                                                                                                                   | Post images and thumbnails |
+| `AWS_S3_CACHE_CONTROL`            | AWS S3 cache control value (must be valid [Cache-Control value](https://developer.mozilla.org/ko/docs/Web/HTTP/Headers/Cache-Control) e.g. max-age=3600 defaults to 'max-age=86400') | Post images and thumbnails |
+| `TYPEORM_CONNECTION`              | [Typeorm setting](https://github.com/typeorm/typeorm/blob/master/docs/using-ormconfig.md#using-environment-variables)                                                                | Database                   |
+| `TYPEORM_HOST`                    | [Typeorm setting](https://github.com/typeorm/typeorm/blob/master/docs/using-ormconfig.md#using-environment-variables)                                                                | Database                   |
+| `TYPEORM_PORT`                    | [Typeorm setting](https://github.com/typeorm/typeorm/blob/master/docs/using-ormconfig.md#using-environment-variables)                                                                | Database                   |
+| `TYPEORM_USERNAME`                | [Typeorm setting](https://github.com/typeorm/typeorm/blob/master/docs/using-ormconfig.md#using-environment-variables)                                                                | Database                   |
+| `TYPEORM_PASSWORD`                | [Typeorm setting](https://github.com/typeorm/typeorm/blob/master/docs/using-ormconfig.md#using-environment-variables)                                                                | Database                   |
+| `TYPEORM_DATABASE`                | [Typeorm setting](https://github.com/typeorm/typeorm/blob/master/docs/using-ormconfig.md#using-environment-variables)                                                                | Database                   |
+| `ELASTICSEARCH_NODE_HOST`         | Hostname of the elasticsearch node (maybe `127.0.0.1`)                                                                                                                               | Elasticsearch              |
+| `ELASTICSEARCH_NODE_PORT`         | Port number of the elasticsearch node (maybe `9200`)                                                                                                                                 | Elasticsearch              |
+| `SITEMAP_BASE_URL`                | URL of the frontend index page for sitemaps (must be end with a slash e.g. `https://blog.ashrimp.dev/`)                                                                              | Sitemap                    |
+| `POST_BASE_URL`                   | URL of the frontend post page for sitemaps (must be end with a slash e.g. `https://blog.ashrimp.dev/posts/`)                                                                         | Sitemap                    |
+| `SSR_FRONTEND_URL`                | URL of the frontend post page for SSR (must be end with a slash e.g. `https://blog.ashrimp.dev/`)                                                                                    | SSR                        |
+| `SSR_FRONTEND_DIR`                | Path to the frontend directory                                                                                                                                                       | SSR                        |
+| `SSR_FRONTEND_SCRIPTS`            | Comma-separated list of script file names that must be executed during SSR                                                                                                           | SSR                        |
+| `SSR_FRONTEND_SCRIPT_ATTACHMENTS` | Comma-separated list of script URLs that must be attached to the end of body after SSR (e.g. `/index.js`)                                                                            | SSR                        |
+| `SSR_FRONTEND_EVENT`              | DOM event name that will be fired when the pages are ready to server for SSR (defaults to `app-loaded`)                                                                              | SSR                        |
+| `SSR_FRONTEND_TIMEOUT`            | Timeout of the SSR rendering in milisecond (defaults to `5000`)                                                                                                                      | SSR                        |
+| `CDN_BASE_URL`                    | URL of the CDN to serve images (must be end with a slash e.g. `https://cdn.blog.ashrimp.dev/`)                                                                                       | CDN                        |
 
 ## Access Level
 
