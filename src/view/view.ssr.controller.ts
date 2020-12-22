@@ -110,6 +110,7 @@ export class ViewSSRController {
 				}
 
 				resolve(dom.serialize());
+				dom.window.close();
 			});
 
 			this.logger.debug(
