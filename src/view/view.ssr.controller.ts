@@ -115,14 +115,6 @@ export class ViewSSRController {
 				`Event(=${this.frontendEvent}) listener attached`
 			);
 
-			// Remove all pre-existing scripts.
-			const scripts = dom.window.document.getElementsByTagName('script');
-
-			this.logger.debug(`Script(=${scripts.length}) found, removing`);
-
-			for (let index = scripts.length - 1; 0 <= index; --index)
-				scripts[index].parentNode?.removeChild(scripts[index]);
-
 			try {
 				for (const script of this.scripts) {
 					dom.window.eval(script);
