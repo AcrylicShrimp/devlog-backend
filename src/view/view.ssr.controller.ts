@@ -72,18 +72,12 @@ export class ViewSSRController {
 	): Promise<string> {
 		path = path ?? '';
 
-		this.logger.debug(`Begining page(=${path})`);
-
 		return new Promise((resolve, reject) => {
 			const dom = new JSDOM(this.indexHTML, {
 				runScripts: 'dangerously',
 				url: `${process.env.SSR_FRONTEND_URL}${path}`,
 				resources: 'usable',
 			});
-
-			this.logger.debug(
-				`DOM created (url=${process.env.SSR_FRONTEND_URL}${path})`
-			);
 
 			// Poly-fill some window functions here.
 			dom.window.scrollTo = () => {};
@@ -95,35 +89,21 @@ export class ViewSSRController {
 				reject('timeout');
 			}, this.timeout);
 
-			this.logger.debug(`Timeout(=${this.timeout}ms) set`);
-
 			dom.window.addEventListener(this.frontendEvent, () => {
-				this.logger.debug(`Event(=${this.frontendEvent}) received`);
-
 				clearTimeout(timeout);
 
 				for (const attachment of this.attachments) {
 					const script = dom.window.document.createElement('script');
 					script.src = attachment;
 					dom.window.document.body.appendChild(script);
-					this.logger.debug(`Script(=${attachment}) attached`);
 				}
 
 				resolve(dom.serialize());
 				dom.window.close();
 			});
 
-			this.logger.debug(
-				`Event(=${this.frontendEvent}) listener attached`
-			);
-
 			try {
-				for (const script of this.scripts) {
-					dom.window.eval(script);
-					this.logger.debug(
-						`Script(=${script.length} characters) executed`
-					);
-				}
+				for (const script of this.scripts) dom.window.eval(script);
 			} catch (err) {
 				this.logger.warn(
 					`Unable to generate page(=${path}), an error(=${err}) occurred!`
