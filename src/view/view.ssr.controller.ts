@@ -78,6 +78,7 @@ export class ViewSSRController {
 			const dom = new JSDOM(this.indexHTML, {
 				runScripts: 'dangerously',
 				url: `${process.env.SSR_FRONTEND_URL}${path}`,
+				resources: 'usable',
 			});
 
 			this.logger.debug(
