@@ -1,8 +1,18 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
-import { Controller, Get, Header, Logger, Param } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Header,
+	Logger,
+	Param,
+	Patch,
+	UseGuards,
+} from '@nestjs/common';
 import * as fs from 'fs';
 import { JSDOM } from 'jsdom';
 import * as path from 'path';
+
+import { AdminGuard } from '../admin/admin.guard';
 
 import { OptionalPipe } from '../helper/OptionalPipe';
 import { StringPipe } from '../helper/StringPipe';
@@ -11,9 +21,9 @@ import { StringPipe } from '../helper/StringPipe';
 export class ViewSSRController {
 	private readonly logger = new Logger(ViewSSRController.name);
 
+	private indexHTML: string;
+	private scripts: string[];
 	private readonly frontendEvent: string;
-	private readonly indexHTML: string;
-	private readonly scripts: string[];
 	private readonly attachments: string[];
 	private readonly timeout: number;
 
@@ -33,6 +43,21 @@ export class ViewSSRController {
 			.split(',')
 			.map((attachment) => attachment.trim());
 		this.timeout = Number(process.env.SSR_FRONTEND_TIMEOUT || 5000);
+	}
+
+	@UseGuards(AdminGuard)
+	@Patch('admin/ssr')
+	async updateSSRPageCaches(): Promise<void> {
+		const frontendDir = process.env.SSR_FRONTEND_DIR || process.cwd();
+		this.indexHTML = fs.readFileSync(
+			path.join(frontendDir, 'index.html'),
+			'utf-8'
+		);
+		this.scripts = (process.env.SSR_FRONTEND_SCRIPTS || '')
+			.split(',')
+			.map((script) =>
+				fs.readFileSync(path.join(frontendDir, script.trim()), 'utf-8')
+			);
 	}
 
 	@Get('ssr/:path(*)?')
