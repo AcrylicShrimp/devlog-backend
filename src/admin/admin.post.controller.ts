@@ -432,15 +432,10 @@ export class AdminPostController {
 							ACL: 'private',
 							Body: processedImage.image,
 							ContentType: processedImage.type,
+							CacheControl:
+								process.env.AWS_S3_CACHE_CONTROL ||
+								'max-age=86400',
 						},
-						tags: [
-							{
-								Key: 'Cache-Control',
-								Value:
-									process.env.AWS_S3_CACHE_CONTROL ||
-									'max-age=86400',
-							},
-						],
 					})
 			);
 
@@ -663,14 +658,9 @@ export class AdminPostController {
 					ACL: 'private',
 					Body: processedImage.image,
 					ContentType: 'image/webp',
+					CacheControl:
+						process.env.AWS_S3_CACHE_CONTROL || 'max-age=86400',
 				},
-				tags: [
-					{
-						Key: 'Cache-Control',
-						Value:
-							process.env.AWS_S3_CACHE_CONTROL || 'max-age=86400',
-					},
-				],
 			});
 
 			try {
