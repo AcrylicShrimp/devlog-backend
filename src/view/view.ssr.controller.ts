@@ -76,7 +76,7 @@ export class ViewSSRController {
 
 		return new Promise((resolve, reject) => {
 			const dom = new JSDOM(this.indexHTML, {
-				runScripts: 'outside-only',
+				runScripts: 'dangerously',
 				url: `${process.env.SSR_FRONTEND_URL}${path}`,
 			});
 
