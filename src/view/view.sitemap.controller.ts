@@ -1,7 +1,6 @@
 import { Controller } from '@nestjs/common';
-import { Get } from '@nestjs/common';
-import { Param, Res } from '@nestjs/common';
-import { Response } from 'express';
+import { Get, Header } from '@nestjs/common';
+import { Param } from '@nestjs/common';
 import { IsNull, Not } from 'typeorm';
 
 import { DBConnService } from '../db/db.conn.service';
@@ -15,8 +14,8 @@ export class ViewSitemapController {
 	constructor(private conn: DBConnService) {}
 
 	@Get('sitemaps')
-	async generateSitemapIndex(@Res() res: Response): Promise<void> {
-		res.set('Content-Type', 'text/xml');
+	@Header('Content-Type', 'text/xml')
+	async generateSitemapIndex(): Promise<string> {
 		return this.conn.conn.transaction(async (mgr) => {
 			const count = await mgr.count(PostItem, {
 				where: {
@@ -43,48 +42,44 @@ export class ViewSitemapController {
 						.getOne()
 				);
 
-			res.send(
-				`<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${(
-					await Promise.all(queries)
+			return `<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${(
+				await Promise.all(queries)
+			)
+				.map((postItem, index) =>
+					postItem
+						? `<sitemap><loc>${
+								process.env.SITEMAP_BASE_URL
+						  }sitemaps/${index}</loc><lastmod>${postItem.modifiedAt.toISOString()}</lastmod></sitemap>`
+						: ''
 				)
-					.map((postItem, index) =>
-						postItem
-							? `<sitemap><loc>${
-									process.env.SITEMAP_BASE_URL
-							  }sitemaps/${index}</loc><lastmod>${postItem.modifiedAt.toISOString()}</lastmod></sitemap>`
-							: ''
-					)
-					.join('')}</sitemapindex>`
-			);
+				.join('')}</sitemapindex>`;
 		});
 	}
 
 	@Get('sitemaps/:page')
+	@Header('Content-Type', 'text/xml')
 	async generateSitemap(
-		@Param('page', PositiveIntegerPipe) page: number,
-		@Res() res: Response
-	): Promise<void> {
-		res.set('Content-Type', 'text/xml').send(
-			`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${(
-				await this.conn.conn.manager.find(PostItem, {
-					where: {
-						accessLevel: PostItemAccessLevel.PUBLIC,
-						content: Not(IsNull()),
-					},
-					select: ['slug', 'modifiedAt'],
-					order: { modifiedAt: 'ASC' },
-					skip: page * 50000,
-					take: 50000,
-				})
+		@Param('page', PositiveIntegerPipe) page: number
+	): Promise<string> {
+		return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${(
+			await this.conn.conn.manager.find(PostItem, {
+				where: {
+					accessLevel: PostItemAccessLevel.PUBLIC,
+					content: Not(IsNull()),
+				},
+				select: ['slug', 'modifiedAt'],
+				order: { modifiedAt: 'ASC' },
+				skip: page * 50000,
+				take: 50000,
+			})
+		)
+			.map((postItem) =>
+				postItem
+					? `<url><loc>${process.env.POST_BASE_URL}${
+							postItem.slug
+					  }</loc><lastmod>${postItem.modifiedAt.toISOString()}</lastmod></url>`
+					: ''
 			)
-				.map((postItem) =>
-					postItem
-						? `<url><loc>${process.env.POST_BASE_URL}${
-								postItem.slug
-						  }</loc><lastmod>${postItem.modifiedAt.toISOString()}</lastmod></url>`
-						: ''
-				)
-				.join('')}</urlset>`
-		);
+			.join('')}</urlset>`;
 	}
 }
