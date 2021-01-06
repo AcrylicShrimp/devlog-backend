@@ -24,7 +24,7 @@
 		"markdown"
 	],
 	"author": "AcrylicShrimp",
-	"license": "ISC",
+	"license": "MIT",
 	"bugs": {
 		"url": "https://github.com/AcrylicShrimp/devlog-backend/issues"
 	},
