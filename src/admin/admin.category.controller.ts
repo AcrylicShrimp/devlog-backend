@@ -11,6 +11,7 @@ import { QueryFailedError } from 'typeorm';
 import { AdminGuard } from './admin.guard';
 
 import { DBConnService } from '../db/db.conn.service';
+import { ViewSSRCacheService } from '../view/view.ssr.cache.service';
 
 import { OptionalPipe } from '../helper/OptionalPipe';
 import { StringPipe } from '../helper/StringPipe';
@@ -21,7 +22,10 @@ import { PostItem } from '../db/entity/PostItem';
 @Controller()
 @UseGuards(AdminGuard)
 export class AdminCategoryController {
-	constructor(private conn: DBConnService) {}
+	constructor(
+		private conn: DBConnService,
+		private cache: ViewSSRCacheService
+	) {}
 
 	@Post('admin/categories')
 	async newCategory(
@@ -40,6 +44,8 @@ export class AdminCategoryController {
 
 			throw err;
 		}
+
+		this.cache.purge();
 	}
 
 	@Delete('admin/categories/:name')
@@ -56,6 +62,8 @@ export class AdminCategoryController {
 
 			await mgr.update(PostItem, { category }, { category: undefined });
 			await mgr.remove(category);
+
+			this.cache.purge();
 		});
 	}
 
@@ -88,6 +96,8 @@ export class AdminCategoryController {
 
 				throw err;
 			}
+
+			this.cache.purge();
 		});
 	}
 }

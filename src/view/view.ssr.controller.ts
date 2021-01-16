@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import { JSDOM } from 'jsdom';
 import * as path from 'path';
 
+import { ViewSSRCacheService } from './view.ssr.cache.service';
+
 import { OptionalPipe } from '../helper/OptionalPipe';
 import { StringPipe } from '../helper/StringPipe';
 
@@ -17,7 +19,7 @@ export class ViewSSRController {
 	private readonly attachments: string[];
 	private readonly timeout: number;
 
-	constructor() {
+	constructor(private cache: ViewSSRCacheService) {
 		const frontendDir = process.env.SSR_FRONTEND_DIR || process.cwd();
 		this.frontendEvent = process.env.SSR_FRONTEND_EVENT || 'app-loaded';
 		this.indexHTML = fs.readFileSync(
@@ -45,18 +47,25 @@ export class ViewSSRController {
 		@Param('path', new OptionalPipe(new StringPipe(Number.MAX_VALUE, true)))
 		path: string | undefined
 	): Promise<string> {
-		path = path ?? '';
+		const pagePath = path ?? '';
 
-		this.logger.debug(`Begining page(=${path})`);
+		this.logger.debug(`Begining page(=${pagePath})`);
+
+		const data = this.cache.get(pagePath);
+
+		if (data) {
+			this.logger.debug(`Cache hit`);
+			return data;
+		}
 
 		return new Promise((resolve, reject) => {
 			const dom = new JSDOM(this.indexHTML, {
 				runScripts: 'outside-only',
-				url: `${process.env.SSR_FRONTEND_URL}${path}`,
+				url: `${process.env.SSR_FRONTEND_URL}${pagePath}`,
 			});
 
 			this.logger.debug(
-				`DOM created (url=${process.env.SSR_FRONTEND_URL}${path})`
+				`DOM created (url=${process.env.SSR_FRONTEND_URL}${pagePath})`
 			);
 
 			// Poly-fill some window functions here.
@@ -64,7 +73,7 @@ export class ViewSSRController {
 
 			const timeout = setTimeout(() => {
 				this.logger.warn(
-					`Unable to generate page(=${path}), timed out(exceeds ${this.timeout}ms)!`
+					`Unable to generate page(=${pagePath}), timed out(exceeds ${this.timeout}ms)!`
 				);
 				reject('timeout');
 			}, this.timeout);
@@ -83,7 +92,9 @@ export class ViewSSRController {
 					this.logger.debug(`Script(=${attachment}) attached`);
 				}
 
-				resolve(dom.serialize());
+				const data = dom.serialize();
+				this.cache.set(pagePath, data);
+				resolve(data);
 			});
 
 			this.logger.debug(
@@ -107,7 +118,7 @@ export class ViewSSRController {
 				}
 			} catch (err) {
 				this.logger.warn(
-					`Unable to generate page(=${path}), an error(=${err}) occurred!`
+					`Unable to generate page(=${pagePath}), an error(=${err}) occurred!`
 				);
 				reject('error');
 			}

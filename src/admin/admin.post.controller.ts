@@ -20,6 +20,7 @@ import { AdminGuard } from './admin.guard';
 import { AdminPostService } from './admin.post.service';
 import { AuthTokenService } from '../auth/auth.token.service';
 import { DBConnService } from '../db/db.conn.service';
+import { ViewSSRCacheService } from '../view/view.ssr.cache.service';
 
 import { OptionalPipe } from '../helper/OptionalPipe';
 import { PositiveIntegerPipe } from '../helper/PositiveIntegerPipe';
@@ -43,7 +44,8 @@ export class AdminPostController {
 		private post: AdminPostService,
 		private es: ElasticsearchService,
 		private token: AuthTokenService,
-		private conn: DBConnService
+		private conn: DBConnService,
+		private cache: ViewSSRCacheService
 	) {
 		this.s3 = new S3({
 			apiVersion: '2006-03-01',
@@ -98,6 +100,8 @@ export class AdminPostController {
 
 				throw err;
 			}
+
+			this.cache.purge();
 		});
 	}
 
@@ -166,6 +170,8 @@ export class AdminPostController {
 				(await this.es.exists({ id: slug, index: 'devlog-posts' })).body
 			)
 				await this.es.delete({ id: slug, index: 'devlog-posts' });
+
+			this.cache.purge();
 		});
 	}
 
@@ -310,6 +316,8 @@ export class AdminPostController {
 						},
 					});
 			}
+
+			this.cache.purge();
 		});
 	}
 
@@ -704,6 +712,8 @@ export class AdminPostController {
 
 				throw err;
 			}
+
+			this.cache.purge();
 		});
 	}
 
@@ -738,6 +748,8 @@ export class AdminPostController {
 					})
 					.promise();
 			} catch {}
+
+			this.cache.purge();
 		});
 	}
 
@@ -809,6 +821,8 @@ export class AdminPostController {
 					},
 				});
 			}
+
+			this.cache.purge();
 		});
 	}
 
@@ -894,6 +908,8 @@ export class AdminPostController {
 					}
 				})
 			);
+
+			this.cache.purge();
 		});
 	}
 }
