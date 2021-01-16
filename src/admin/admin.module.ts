@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
 
 import { AuthModule } from '../auth/auth.module';
+import { ViewModule } from '../view/view.module';
 
 import { AdminSessionController } from './admin.session.controller';
 import { AdminCategoryController } from './admin.category.controller';
@@ -14,6 +15,7 @@ import { AdminPostService } from './admin.post.service';
 		ElasticsearchModule.register({
 			node: `http://${process.env.ELASTICSEARCH_NODE_HOST}:${process.env.ELASTICSEARCH_NODE_PORT}`,
 		}),
+		ViewModule,
 	],
 	providers: [AdminPostService],
 	controllers: [

@@ -40,6 +40,7 @@ A minimal devlog service.
 | `SSR_FRONTEND_SCRIPT_ATTACHMENTS` | Comma-separated list of script URLs that must be attached to the end of body after SSR (e.g. `/index.js`)                                                                            | SSR                        |
 | `SSR_FRONTEND_EVENT`              | DOM event name that will be fired when the pages are ready to serve for SSR (defaults to `app-loaded`)                                                                               | SSR                        |
 | `SSR_FRONTEND_TIMEOUT`            | Timeout of the SSR rendering in milisecond (defaults to `5000`)                                                                                                                      | SSR                        |
+| `SSR_CACHE_EXPIRY`                | Expiry of the caches for SSR rendered pages in milisecond (defaults to `604800000`, the caches are automatically purged when any visible changes made)                               | SSR                        |
 | `CDN_BASE_URL`                    | URL of the CDN to serve images (must be end with a slash e.g. `https://cdn.blog.ashrimp.dev/`)                                                                                       | CDN                        |
 
 ## Access Level

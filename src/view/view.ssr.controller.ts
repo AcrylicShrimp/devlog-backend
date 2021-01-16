@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
 import {
 	Controller,
 	Get,
@@ -14,6 +13,8 @@ import * as path from 'path';
 
 import { AdminGuard } from '../admin/admin.guard';
 
+import { ViewSSRCacheService } from './view.ssr.cache.service';
+
 import { OptionalPipe } from '../helper/OptionalPipe';
 import { StringPipe } from '../helper/StringPipe';
 
@@ -27,7 +28,7 @@ export class ViewSSRController {
 	private readonly attachments: string[];
 	private readonly timeout: number;
 
-	constructor() {
+	constructor(private cache: ViewSSRCacheService) {
 		const frontendDir = process.env.SSR_FRONTEND_DIR || process.cwd();
 		this.frontendEvent = process.env.SSR_FRONTEND_EVENT || 'app-loaded';
 		this.indexHTML = fs.readFileSync(
@@ -70,21 +71,25 @@ export class ViewSSRController {
 		@Param('path', new OptionalPipe(new StringPipe(Number.MAX_VALUE, true)))
 		path: string | undefined
 	): Promise<string> {
-		path = path ?? '';
+		const pagePath = path ?? '';
+		const data = this.cache.get(pagePath);
+
+		if (data) return data;
 
 		return new Promise((resolve, reject) => {
 			const dom = new JSDOM(this.indexHTML, {
 				runScripts: 'dangerously',
-				url: `${process.env.SSR_FRONTEND_URL}${path}`,
+				url: `${process.env.SSR_FRONTEND_URL}${pagePath}`,
 				resources: 'usable',
 			});
 
 			// Poly-fill some window functions here.
+			// eslint-disable-next-line @typescript-eslint/no-empty-function
 			dom.window.scrollTo = () => {};
 
 			const timeout = setTimeout(() => {
 				this.logger.warn(
-					`Unable to generate page(=${path}), timed out(exceeds ${this.timeout}ms)!`
+					`Unable to generate page(=${pagePath}), timed out(exceeds ${this.timeout}ms)!`
 				);
 				reject('timeout');
 			}, this.timeout);
@@ -98,15 +103,17 @@ export class ViewSSRController {
 					dom.window.document.body.appendChild(script);
 				}
 
-				resolve(dom.serialize());
+				const data = dom.serialize();
 				dom.window.close();
+				this.cache.set(pagePath, data);
+				resolve(data);
 			});
 
 			try {
 				for (const script of this.scripts) dom.window.eval(script);
 			} catch (err) {
 				this.logger.warn(
-					`Unable to generate page(=${path}), an error(=${err}) occurred!`
+					`Unable to generate page(=${pagePath}), an error(=${err}) occurred!`
 				);
 				reject('error');
 			}
