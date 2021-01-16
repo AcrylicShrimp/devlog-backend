@@ -72,15 +72,9 @@ export class ViewSSRController {
 		path: string | undefined
 	): Promise<string> {
 		const pagePath = path ?? '';
-
-		this.logger.debug(`Begining page(=${pagePath})`);
-
 		const data = this.cache.get(pagePath);
 
-		if (data) {
-			this.logger.debug(`Cache hit`);
-			return data;
-		}
+		if (data) return data;
 
 		return new Promise((resolve, reject) => {
 			const dom = new JSDOM(this.indexHTML, {
