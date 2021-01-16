@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
 import {
 	Controller,
 	Get,
@@ -91,6 +90,7 @@ export class ViewSSRController {
 			});
 
 			// Poly-fill some window functions here.
+			// eslint-disable-next-line @typescript-eslint/no-empty-function
 			dom.window.scrollTo = () => {};
 
 			const timeout = setTimeout(() => {
