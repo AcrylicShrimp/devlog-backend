@@ -31,6 +31,7 @@ import { Category } from '../db/entity/Category';
 import { PostItem, PostItemAccessLevel } from '../db/entity/PostItem';
 import { PostItemImage } from '../db/entity/PostItemImage';
 import { PostItemThumbnail } from '../db/entity/PostItemThumbnail';
+import { PostItemVideo } from '../db/entity/PostItemVideo';
 
 import { asEnum, isEnum } from '../helper/Enum';
 import { parseAsText } from '../helper/MDRenderer';
@@ -113,6 +114,7 @@ export class AdminPostController {
 			const post = await mgr
 				.createQueryBuilder(PostItem, 'PostItem')
 				.leftJoin('PostItem.images', 'PostItemImage')
+				.leftJoin('PostItem.videos', 'PostItemVideo')
 				.leftJoin('PostItem.thumbnail', 'PostItemThumbnail')
 				.where('PostItem.slug = :slug', { slug })
 				.select([
@@ -120,6 +122,8 @@ export class AdminPostController {
 					'PostItem.uuid',
 					'PostItemImage.id',
 					'PostItemImage.uuid',
+					'PostItemVideo.id',
+					'PostItemVideo.uuid',
 					'PostItemThumbnail.id',
 				])
 				.getOne();
@@ -162,8 +166,28 @@ export class AdminPostController {
 						.promise();
 				} catch {}
 
+			for (let index = 0; index < post.videos.length; index += 1000)
+				try {
+					await this.s3
+						.deleteObjects({
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							Bucket: process.env.AWS_S3_BUCKET_NAME!,
+							Delete: {
+								Objects: post.videos
+									.slice(index, index + 1000)
+									.map((video) => {
+										return {
+											Key: `${post.uuid}/${video.uuid}`,
+										};
+									}),
+							},
+						})
+						.promise();
+				} catch {}
+
 			if (post.thumbnail) mgr.remove(post.thumbnail);
 			mgr.remove(post.images);
+			mgr.remove(post.videos);
 			mgr.remove(post);
 
 			if (
@@ -540,6 +564,153 @@ export class AdminPostController {
 		});
 	}
 
+	@Post('admin/posts/:slug/videos')
+	async newPostVideo(
+		@Req() req: Request,
+		@Param('slug', new StringPipe(256), SlugPipe) slug: string
+	): Promise<number[]> {
+		return await this.conn.conn.transaction(async (mgr) => {
+			const post = await mgr.findOne(PostItem, {
+				where: { slug },
+				select: ['id', 'uuid', 'videoCount'],
+			});
+
+			if (!post) throw new NotFoundException('post not exists');
+
+			const files = await new Promise<formidable.Files>(
+				(resolve, reject) =>
+					new formidable.IncomingForm({
+						multiples: true,
+					}).parse(req, (err, _, files) =>
+						err ? reject(err) : resolve(files)
+					)
+			);
+
+			if (!files['videos']) return [];
+
+			const videos = Array.isArray(files['videos'])
+				? files['videos']
+				: [files['videos']];
+
+			const processedVideos = await Promise.all(
+				videos.map(async (video) => {
+					const videoId = await this.token.generateShort();
+					const videoStream = fs.createReadStream(video.path);
+
+					return {
+						id: videoId,
+						video: videoStream,
+					};
+				})
+			);
+
+			const uploads = processedVideos.map(
+				(processedVideo) =>
+					new S3.ManagedUpload({
+						service: this.s3,
+						params: {
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							Bucket: process.env.AWS_S3_BUCKET_NAME!,
+							Key: `${post.uuid}/${processedVideo.id}`,
+							ACL: 'private',
+							Body: processedVideo.video,
+							CacheControl:
+								process.env.AWS_S3_CACHE_CONTROL ||
+								'max-age=86400',
+						},
+					})
+			);
+
+			try {
+				const uploadResults = await Promise.all(
+					uploads.map((upload) => upload.promise())
+				);
+
+				await mgr.update(PostItem, post.id, {
+					videoCount: post.videoCount + processedVideos.length,
+				});
+
+				const videos = await Promise.all(
+					processedVideos.map((processedVideo, index) => {
+						const postVideo = new PostItemVideo();
+						postVideo.uuid = processedVideo.id;
+						postVideo.index = post.videoCount + index;
+						postVideo.url = uploadResults[index].Location;
+						postVideo.post = post;
+
+						return mgr.save(postVideo);
+					})
+				);
+
+				return videos.map((video) => video.index);
+			} catch (err) {
+				uploads.forEach((upload) => upload.abort());
+
+				for (
+					let index = 0;
+					index < processedVideos.length;
+					index += 1000
+				)
+					this.s3
+						.deleteObjects({
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							Bucket: process.env.AWS_S3_BUCKET_NAME!,
+							Delete: {
+								Objects: processedVideos
+									.slice(index, index + 1000)
+									.map((processedVideo) => ({
+										Key: `${post.uuid}/${processedVideo.id}`,
+									})),
+							},
+						})
+						.promise()
+						.catch();
+
+				throw err;
+			}
+		});
+	}
+
+	@Delete('admin/posts/:slug/videos/:index')
+	async deletePostVideo(
+		@Param('slug', new StringPipe(256), SlugPipe) slug: string,
+		@Param('index', PositiveIntegerPipe) index: string
+	): Promise<void> {
+		await this.conn.conn.transaction(async (mgr) => {
+			const post = await mgr.findOne(PostItem, {
+				where: { slug },
+				select: ['id', 'uuid'],
+			});
+
+			if (!post) throw new NotFoundException('post not exists');
+
+			const video = await mgr.findOne(PostItemVideo, {
+				where: { post, index },
+				select: ['id', 'uuid'],
+			});
+
+			if (!video) throw new NotFoundException('video not exists');
+
+			try {
+				await this.s3
+					.deleteObjects({
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						Bucket: process.env.AWS_S3_BUCKET_NAME!,
+						Delete: {
+							Objects: [
+								{
+									Key: `${post.uuid}/${video.uuid}`,
+								},
+							],
+						},
+					})
+					.promise();
+			} catch {}
+
+			await mgr.remove(video);
+		});
+	}
+
 	@Put('admin/posts/:slug/thumbnail')
 	async putPostThumbnail(
 		@Req() req: Request,
@@ -752,10 +923,13 @@ export class AdminPostController {
 			const post = await mgr
 				.createQueryBuilder(PostItem, 'PostItem')
 				.leftJoin('PostItem.images', 'PostItemImage')
+				.leftJoin('PostItem.videos', 'PostItemVideo')
 				.select([
 					'PostItem.id',
 					'PostItemImage.index',
 					'PostItemImage.url',
+					'PostItemVideo.index',
+					'PostItemVideo.url',
 				])
 				.where('PostItem.slug = :slug', { slug })
 				.getOne();
@@ -822,12 +996,15 @@ export class AdminPostController {
 			const posts = await mgr
 				.createQueryBuilder(PostItem, 'PostItem')
 				.leftJoin('PostItem.images', 'PostItemImage')
+				.leftJoin('PostItem.videos', 'PostItemVideo')
 				.select([
 					'PostItem.id',
 					'PostItem.slug',
 					'PostItem.content',
 					'PostItemImage.index',
 					'PostItemImage.url',
+					'PostItemVideo.index',
+					'PostItemVideo.url',
 				])
 				.where('PostItem.content IS NOT NULL')
 				.getMany();

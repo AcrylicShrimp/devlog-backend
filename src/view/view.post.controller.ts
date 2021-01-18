@@ -309,6 +309,7 @@ export class ViewPostController {
 			.createQueryBuilder(PostItem, 'PostItem')
 			.leftJoin('PostItem.category', 'Category')
 			.leftJoin('PostItem.images', 'PostItemImage')
+			.leftJoin('PostItem.videos', 'PostItemVideo')
 			.leftJoin('PostItem.thumbnail', 'PostItemThumbnail')
 			.select([
 				'PostItem.accessLevel',
@@ -317,6 +318,7 @@ export class ViewPostController {
 				'PostItem.contentPreview',
 				'PostItem.htmlContent',
 				'PostItem.imageCount',
+				'PostItem.videoCount',
 				'PostItem.createdAt',
 				'PostItem.modifiedAt',
 				'PostItem.category',
@@ -327,6 +329,9 @@ export class ViewPostController {
 				'PostItemImage.hash',
 				'PostItemImage.url',
 				'PostItemImage.createdAt',
+				'PostItemVideo.index',
+				'PostItemVideo.url',
+				'PostItemVideo.createdAt',
 				'PostItemThumbnail.width',
 				'PostItemThumbnail.height',
 				'PostItemThumbnail.hash',
@@ -343,6 +348,7 @@ export class ViewPostController {
 		const post = await query
 			.andWhere('PostItem.slug = :slug', { slug })
 			.orderBy('PostItemImage.index', 'ASC')
+			.addOrderBy('PostItemVideo.index', 'ASC')
 			.getOne();
 
 		if (!post) throw new NotFoundException('no post found');
@@ -356,6 +362,12 @@ export class ViewPostController {
 
 			for (const image of post.images)
 				image.url = image.url.replace(
+					this.urlRegex,
+					process.env.CDN_BASE_URL
+				);
+
+			for (const video of post.videos)
+				video.url = video.url.replace(
 					this.urlRegex,
 					process.env.CDN_BASE_URL
 				);

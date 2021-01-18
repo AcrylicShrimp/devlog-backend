@@ -14,6 +14,7 @@ import {
 import { Category } from './Category';
 import { PostItemImage } from './PostItemImage';
 import { PostItemThumbnail } from './PostItemThumbnail';
+import { PostItemVideo } from './PostItemVideo';
 
 export enum PostItemAccessLevel {
 	PUBLIC = 'public',
@@ -55,6 +56,12 @@ export class PostItem {
 
 	@Column({ default: 0 })
 	imageCount!: number; // Accumulates total uploaded image count.
+
+	@OneToMany(() => PostItemVideo, (video) => video.post)
+	videos!: PostItemVideo[];
+
+	@Column({ default: 0 })
+	videoCount!: number; // Accumulates total uploaded video count.
 
 	@OneToOne(() => PostItemThumbnail)
 	@JoinColumn()

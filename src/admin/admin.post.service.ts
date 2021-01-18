@@ -4,7 +4,7 @@ import { PostItem } from '../db/entity/PostItem';
 
 import {
 	parseAsPlain,
-	parseAsHTMLWithImage,
+	parseAsHTMLWithImageAndVideo,
 	parseAsText,
 } from '../helper/MDRenderer';
 
@@ -21,11 +21,17 @@ export class AdminPostService {
 		htmlContent: string;
 	}> {
 		const postImage: { [key: number]: string } = {};
+		const postVideo: { [key: number]: string } = {};
 
 		for (const image of post.images)
 			postImage[image.index] = process.env.CDN_BASE_URL
 				? image.url.replace(this.urlRegex, process.env.CDN_BASE_URL)
 				: image.url;
+
+		for (const video of post.videos)
+			postVideo[video.index] = process.env.CDN_BASE_URL
+				? video.url.replace(this.urlRegex, process.env.CDN_BASE_URL)
+				: video.url;
 
 		// Slice some beginning content and cutout a broken HTML entity if any.
 		const contentPreview = (await parseAsPlain(content))
@@ -35,7 +41,11 @@ export class AdminPostService {
 		return {
 			contentText: await parseAsText(content),
 			contentPreview,
-			htmlContent: await parseAsHTMLWithImage(content, postImage),
+			htmlContent: await parseAsHTMLWithImageAndVideo(
+				content,
+				postImage,
+				postVideo
+			),
 		};
 	}
 }

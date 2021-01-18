@@ -166,20 +166,32 @@ const textRenderer = new (class extends Renderer {
 	}
 })();
 
-export async function parseAsHTMLWithImage(
+export async function parseAsHTMLWithImageAndVideo(
 	content: string,
-	postImage: { [key: number]: string }
+	postImage: { [key: number]: string },
+	postVideo: { [key: number]: string }
 ): Promise<string> {
 	const htmlRenderer = new (class extends Renderer {
 		image(href: string | null, title: string | null, text: string) {
 			if (href) {
-				const match = href.match(/\$(\d+)$/i);
+				const match = href.match(/[\$@](\d+)$/i);
 
 				if (match) {
-					const index = parseInt(match[1]);
+					if (match[0][0] === '$') {
+						// Image
+						const index = parseInt(match[1]);
 
-					if (!isNaN(index) && index in postImage)
-						href = postImage[index];
+						if (!isNaN(index) && index in postImage)
+							href = postImage[index];
+					} else if (match[0][0] === '@') {
+						// Video
+						const index = parseInt(match[1]);
+
+						if (!isNaN(index) && index in postVideo)
+							return super
+								.image(postVideo[index], title, text)
+								.replace(/^<img/i, '<video');
+					}
 				}
 			}
 
