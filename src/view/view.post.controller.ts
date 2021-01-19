@@ -365,12 +365,6 @@ export class ViewPostController {
 					this.urlRegex,
 					process.env.CDN_BASE_URL
 				);
-
-			for (const video of post.videos)
-				video.url = video.url.replace(
-					this.urlRegex,
-					process.env.CDN_BASE_URL
-				);
 		}
 
 		return post;

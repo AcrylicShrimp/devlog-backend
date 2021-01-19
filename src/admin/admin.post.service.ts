@@ -28,10 +28,7 @@ export class AdminPostService {
 				? image.url.replace(this.urlRegex, process.env.CDN_BASE_URL)
 				: image.url;
 
-		for (const video of post.videos)
-			postVideo[video.index] = process.env.CDN_BASE_URL
-				? video.url.replace(this.urlRegex, process.env.CDN_BASE_URL)
-				: video.url;
+		for (const video of post.videos) postVideo[video.index] = video.url;
 
 		// Slice some beginning content and cutout a broken HTML entity if any.
 		const contentPreview = (await parseAsPlain(content))
