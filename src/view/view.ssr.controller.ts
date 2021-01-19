@@ -65,7 +65,7 @@ export class ViewSSRController {
 	@Header('Content-Type', 'text/html')
 	@Header(
 		'Content-Security-Policy',
-		"default-src 'self' https:; img-src 'self' http: data:; style-src 'unsafe-inline' 'self' https:;"
+		"default-src 'self' https:; img-src 'self' http: data:; media-src 'self' http: data: blob:; style-src 'unsafe-inline' 'self';"
 	)
 	async generateSSRPage(
 		@Param('path', new OptionalPipe(new StringPipe(Number.MAX_VALUE, true)))
