@@ -35,6 +35,8 @@ declare module 'formidable' {
 	}
 
 	export interface ConstructorOptions {
+		maxFileSize?: number;
+		maxFields?: number;
 		multiples?: boolean;
 	}
 

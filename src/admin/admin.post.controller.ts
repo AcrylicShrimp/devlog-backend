@@ -361,6 +361,8 @@ export class AdminPostController {
 			const files = await new Promise<formidable.Files>(
 				(resolve, reject) =>
 					new formidable.IncomingForm({
+						maxFileSize: 1024 * 1024 * 1024 * 1024,
+						maxFields: 0,
 						multiples: true,
 					}).parse(req, (err, _, files) =>
 						err ? reject(err) : resolve(files)
@@ -580,6 +582,8 @@ export class AdminPostController {
 			const files = await new Promise<formidable.Files>(
 				(resolve, reject) =>
 					new formidable.IncomingForm({
+						maxFileSize: 1024 * 1024 * 1024 * 1024,
+						maxFields: 0,
 						multiples: true,
 					}).parse(req, (err, _, files) =>
 						err ? reject(err) : resolve(files)
