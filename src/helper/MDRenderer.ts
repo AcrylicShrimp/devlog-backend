@@ -190,7 +190,7 @@ export async function parseAsHTMLWithImageAndVideo(
 						if (!isNaN(index) && index in postVideo)
 							return super
 								.image(postVideo[index], title, text)
-								.replace(/^<img/i, '<video');
+								.replace(/^<img/i, '<video controls');
 					}
 				}
 			}
