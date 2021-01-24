@@ -588,20 +588,9 @@ export class AdminPostController {
 						maxFileSize: 1024 * 1024 * 1024 * 1024,
 						maxFields: 0,
 						multiples: true,
-					})
-						.on(
-							'progress',
-							(received: number, expected: number): void =>
-								console.log(
-									`Video uploaded ${(
-										(received / expected) *
-										100
-									).toFixed(2)} %`
-								)
-						)
-						.parse(req, (err, _, files) =>
-							err ? reject(err) : resolve(files)
-						)
+					}).parse(req, (err, _, files) =>
+						err ? reject(err) : resolve(files)
+					)
 			);
 
 			if (!files['videos']) return [];
