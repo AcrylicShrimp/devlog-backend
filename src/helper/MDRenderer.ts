@@ -188,9 +188,9 @@ export async function parseAsHTMLWithImageAndVideo(
 						const index = parseInt(match[1]);
 
 						if (!isNaN(index) && index in postVideo)
-							return super
+							return `${super
 								.image(postVideo[index], title, text)
-								.replace(/^<img/i, '<video controls');
+								.replace(/^<img/i, '<video controls')}</video>`;
 					}
 				}
 			}
