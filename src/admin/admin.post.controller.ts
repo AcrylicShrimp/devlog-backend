@@ -591,7 +591,8 @@ export class AdminPostController {
 							(received: number, expected: number): void =>
 								console.log(
 									`Video uploaded ${(
-										received / expected
+										(received / expected) *
+										100
 									).toFixed(2)} %`
 								)
 						)
