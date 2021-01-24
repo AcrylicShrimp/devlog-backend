@@ -379,10 +379,7 @@ export class AdminPostController {
 				images.map(async (image) => {
 					const imageId = await this.token.generateShort();
 					const imageTransformForUpload = fs.createReadStream(
-						image.path,
-						{
-							highWaterMark: 256 * 1024,
-						}
+						image.path
 					);
 
 					const { width, height } = await sharp(
@@ -602,9 +599,7 @@ export class AdminPostController {
 			const processedVideos = await Promise.all(
 				videos.map(async (video) => {
 					const videoId = await this.token.generateShort();
-					const videoStream = fs.createReadStream(video.path, {
-						highWaterMark: 4 * 1024 * 1024,
-					});
+					const videoStream = fs.createReadStream(video.path);
 
 					return {
 						id: videoId,
