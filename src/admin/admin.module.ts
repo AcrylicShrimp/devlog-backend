@@ -4,9 +4,9 @@ import { ElasticsearchModule } from '@nestjs/elasticsearch';
 import { AuthModule } from '../auth/auth.module';
 import { ViewModule } from '../view/view.module';
 
-// import { AdminSessionController } from './admin.session.controller';
-// import { AdminCategoryController } from './admin.category.controller';
-// import { AdminPostController } from './admin.post.controller';
+import { AdminSessionController } from './admin.session.controller';
+import { AdminCategoryController } from './admin.category.controller';
+import { AdminPostController } from './admin.post.controller';
 import { AdminPostService } from './admin.post.service';
 
 @Module({
@@ -19,9 +19,9 @@ import { AdminPostService } from './admin.post.service';
 	],
 	providers: [AdminPostService],
 	controllers: [
-		// AdminSessionController,
-		// AdminCategoryController,
-		// AdminPostController,
+		AdminSessionController,
+		AdminCategoryController,
+		AdminPostController,
 	],
 })
 export class AdminModule {}
