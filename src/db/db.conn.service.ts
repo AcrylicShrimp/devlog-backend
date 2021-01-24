@@ -5,7 +5,7 @@ import { Connection } from 'typeorm';
 export class DBConnService {
 	public constructor(private connection: Connection) {}
 
-	public get conn() {
+	public get conn(): Connection {
 		return this.connection;
 	}
 }
