@@ -9,6 +9,8 @@ import helmet from 'helmet';
 
 import { AppModule } from './app.module';
 
+setInterval(() => console.log(process.memoryUsage()), 10000);
+
 (async () => {
 	const app = await NestFactory.create(AppModule);
 
