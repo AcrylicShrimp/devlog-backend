@@ -6,6 +6,6 @@ import { ESModule } from './es/es.module';
 import { ViewModule } from './view/view.module';
 
 @Module({
-	imports: [AdminModule, DBModule],
+	imports: [ESModule, ViewModule],
 })
 export class AppModule {}
