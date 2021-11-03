@@ -52,7 +52,7 @@
 		"rxjs": "^6.6.3",
 		"sharp": "^0.27.0",
 		"typeorm": "^0.2.30",
-		"validator": "^13.1.17"
+		"validator": "^13.7.0"
 	},
 	"devDependencies": {
 		"@nestjs/cli": "^7.5.4",
