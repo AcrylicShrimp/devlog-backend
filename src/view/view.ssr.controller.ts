@@ -10,7 +10,6 @@ import {
 import * as fs from 'fs';
 import { JSDOM } from 'jsdom';
 import * as path from 'path';
-import fetch from 'node-fetch';
 
 import { AdminGuard } from '../admin/admin.guard';
 
@@ -18,6 +17,7 @@ import { ViewSSRCacheService } from './view.ssr.cache.service';
 
 import { OptionalPipe } from '../helper/OptionalPipe';
 import { StringPipe } from '../helper/StringPipe';
+import { ViewSSRFetchService } from './view.ssr.fetch.service';
 
 @Controller()
 export class ViewSSRController {
@@ -29,7 +29,10 @@ export class ViewSSRController {
 	private readonly attachments: string[];
 	private readonly timeout: number;
 
-	constructor(private cache: ViewSSRCacheService) {
+	constructor(
+		private cache: ViewSSRCacheService,
+		private fetch: ViewSSRFetchService
+	) {
 		const frontendDir = process.env.SSR_FRONTEND_DIR || process.cwd();
 		this.frontendEvent = process.env.SSR_FRONTEND_EVENT || 'app-loaded';
 		this.indexHTML = fs.readFileSync(
@@ -87,7 +90,8 @@ export class ViewSSRController {
 			// Poly-fill some window functions here.
 			// eslint-disable-next-line @typescript-eslint/no-empty-function
 			dom.window.scrollTo = () => {};
-			dom.window.fetch = fetch as unknown as typeof dom.window.fetch;
+			dom.window.fetch = this.fetch
+				.fetch as unknown as typeof dom.window.fetch;
 
 			const timeout = setTimeout(() => {
 				this.logger.warn(
