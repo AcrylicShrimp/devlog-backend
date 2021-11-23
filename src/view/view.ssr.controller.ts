@@ -8,6 +8,7 @@ import {
 	UseGuards,
 } from '@nestjs/common';
 import * as fs from 'fs';
+import { fetch } from 'got-fetch';
 import { JSDOM } from 'jsdom';
 import * as path from 'path';
 
@@ -17,7 +18,6 @@ import { ViewSSRCacheService } from './view.ssr.cache.service';
 
 import { OptionalPipe } from '../helper/OptionalPipe';
 import { StringPipe } from '../helper/StringPipe';
-import { ViewSSRFetchService } from './view.ssr.fetch.service';
 
 @Controller()
 export class ViewSSRController {
@@ -29,10 +29,7 @@ export class ViewSSRController {
 	private readonly attachments: string[];
 	private readonly timeout: number;
 
-	constructor(
-		private cache: ViewSSRCacheService,
-		private fetch: ViewSSRFetchService
-	) {
+	constructor(private cache: ViewSSRCacheService) {
 		const frontendDir = process.env.SSR_FRONTEND_DIR || process.cwd();
 		this.frontendEvent = process.env.SSR_FRONTEND_EVENT || 'app-loaded';
 		this.indexHTML = fs.readFileSync(
@@ -90,8 +87,7 @@ export class ViewSSRController {
 			// Poly-fill some window functions here.
 			// eslint-disable-next-line @typescript-eslint/no-empty-function
 			dom.window.scrollTo = () => {};
-			dom.window.fetch = this.fetch
-				.fetch as unknown as typeof dom.window.fetch;
+			dom.window.fetch = fetch;
 
 			const timeout = setTimeout(() => {
 				this.logger.warn(
