@@ -10,6 +10,7 @@ import {
 import * as fs from 'fs';
 import { JSDOM } from 'jsdom';
 import * as path from 'path';
+import fetch from 'node-fetch';
 
 import { AdminGuard } from '../admin/admin.guard';
 
@@ -86,6 +87,7 @@ export class ViewSSRController {
 			// Poly-fill some window functions here.
 			// eslint-disable-next-line @typescript-eslint/no-empty-function
 			dom.window.scrollTo = () => {};
+			dom.window.fetch = fetch as typeof dom.window.fetch;
 
 			const timeout = setTimeout(() => {
 				this.logger.warn(
